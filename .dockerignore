@@ -1,0 +1,65 @@
+# ========================================
+# .dockerignore - FastFood Pedidos
+# ========================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+*.iml
+.vscode
+.eclipse
+.settings
+.project
+.classpath
+
+# Build artifacts
+target/
+build/
+out/
+bin/
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+# Documentation
+*.md
+docs/
+arquitetura/
+*.drawio
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+compose.yaml
+.dockerignore
+
+# Database data
+data/
+*.sql
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+test-api.sh
+test-api.ps1
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Environment
+.env
+.env.*

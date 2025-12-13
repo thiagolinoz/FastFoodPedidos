@@ -1,26 +1,36 @@
-INSERT INTO tb_pessoas (cd_doc_pessoa, nm_pessoa, tp_pessoa, ds_email)
+-- Carga Inicial de Produtos (Catálogo Simulado)
+INSERT INTO tb_produtos (nm_produto, ds_descricao, vl_preco, tp_categoria, sn_ativo)
 VALUES
-('49091541164','Silvana Elaine Lopes','CLIENTE','silvana_elaine_lopes@ufscar.br'),
-('95912288560','Isaac Sebastião Ribeiro','CLIENTE','isaac.sebastiao.ribeiro@sgstelecom.com.br'),
-('97940404601','Martin Márcio Castro','CLIENTE','martin.marcio.castro@polifiltro.com.br'),
-('15440310177','Emily Laís Cardoso','CLIENTE','emilylaiscardoso@julianacaran.com.br'),
-('94368784278','Adriana Sueli Carla da Rocha','CLIENTE','adriana_sueli_darocha@marcossousa.com'),
-('58568119174','Thales Iago Santos','CLIENTE','thales_iago_santos@renoveseuseguro.com'),
-('62602090379','Igor Enrico Marcelo Moraes','CLIENTE','igorenricomoraes@csa.edu.br'),
-('96200369135','Natália Brenda Stefany Carvalho','CLIENTE','nataliabrendacarvalho@publicarbrasil.com.br'),
-('32428430882','Ester Emily Luzia Freitas','CLIENTE','ester.emily.freitas@email.com'),
-('44009435852','Natália Fátima Alana Caldeira','CLIENTE','natalia-caldeira85@predialnet.com.br');
+-- LANCHES
+('Hamburguer Clássico', 'Pão artesanal, hambúrguer 180g, alface, tomate e molho especial', 18.00, 'LANCHE', 1),
+('X-Burguer', 'Pão, hambúrguer 180g, queijo cheddar e molho barbecue', 20.00, 'LANCHE', 1),
+('X-Salada', 'Pão, hambúrguer 180g, queijo, alface, tomate e maionese', 22.00, 'LANCHE', 1),
+('X-Bacon', 'Pão, hambúrguer 180g, queijo, bacon crocante, alface e molho', 25.00, 'LANCHE', 1),
+('X-Tudo', 'Pão, 2 hambúrgueres, queijo, bacon, ovo, salada e molhos', 32.00, 'LANCHE', 1),
+('Vegetariano', 'Pão integral, hambúrguer de grão-de-bico, queijo, salada', 24.00, 'LANCHE', 1),
 
-INSERT INTO tb_produtos (nm_produto, ds_descricao, vl_preco, tp_categoria)
-VALUES
-('Hambuger','Pão e hamburguer','12.00','LANCHE'),
-('X-Burguer','Pão, hamburguer e queijo prato','15.00','LANCHE'),
-('X-Salada','Pão, hamburguer, queijo e alface','17.00','LANCHE'),
-('X-Bacon','Pão, hamburguer, queijo, alface e bacon','19.00','LANCHE'),
-('Batata Frita - Individual','Batata','10.00','ACOMPANHAMENTO'),
-('Batata Frita - Porção','Batata','28.00','ACOMPANHAMENTO'),
-('Milk Shake - Morango','Sorvete de baunilha, leite integral e cobertura de morango','15.00','BEBIDA'),
-('Milk Shake - Chocolate','Sorvete de baunilha, leite integral e cobertura de chocolate','15.00','BEBIDA'),
-('Milk Shake - Doce de Leite','Sorvete de baunilha, leite integral e doce de leite','17.00','BEBIDA'),
-('Brownie de Chocolate','Brownie de chocolate','20.00','SOBREMESA'),
-('Cookie com Gotas de Chocolate','Cookie com gotas e chocolate','15.00','SOBREMESA');
+-- ACOMPANHAMENTOS
+('Batata Frita - Pequena', 'Batatas crocantes 200g com sal especial', 10.00, 'ACOMPANHAMENTO', 1),
+('Batata Frita - Média', 'Batatas crocantes 400g com sal especial', 16.00, 'ACOMPANHAMENTO', 1),
+('Batata Frita - Grande', 'Batatas crocantes 600g com sal especial', 22.00, 'ACOMPANHAMENTO', 1),
+('Onion Rings', 'Anéis de cebola empanados e fritos - 300g', 18.00, 'ACOMPANHAMENTO', 1),
+('Nuggets - 6 unidades', 'Nuggets de frango empanados', 14.00, 'ACOMPANHAMENTO', 1),
+('Nuggets - 10 unidades', 'Nuggets de frango empanados', 20.00, 'ACOMPANHAMENTO', 1),
+
+-- BEBIDAS
+('Coca-Cola 350ml', 'Refrigerante Coca-Cola lata', 6.00, 'BEBIDA', 1),
+('Guaraná Antarctica 350ml', 'Refrigerante Guaraná Antarctica lata', 6.00, 'BEBIDA', 1),
+('Suco de Laranja 500ml', 'Suco natural de laranja', 8.00, 'BEBIDA', 1),
+('Suco de Limão 500ml', 'Suco natural de limão', 8.00, 'BEBIDA', 1),
+('Milk Shake - Morango', 'Sorvete de baunilha, leite e calda de morango', 15.00, 'BEBIDA', 1),
+('Milk Shake - Chocolate', 'Sorvete de baunilha, leite e calda de chocolate', 15.00, 'BEBIDA', 1),
+('Milk Shake - Doce de Leite', 'Sorvete de baunilha, leite e doce de leite', 16.00, 'BEBIDA', 1),
+('Água Mineral 500ml', 'Água mineral sem gás', 4.00, 'BEBIDA', 1),
+
+-- SOBREMESAS
+('Brownie de Chocolate', 'Brownie artesanal com pedaços de chocolate', 12.00, 'SOBREMESA', 1),
+('Torta de Limão', 'Fatia de torta de limão com merengue', 14.00, 'SOBREMESA', 1),
+('Petit Gateau', 'Petit gateau de chocolate com sorvete de baunilha', 18.00, 'SOBREMESA', 1),
+('Cookie com Gotas de Chocolate', 'Cookie artesanal com gotas de chocolate', 8.00, 'SOBREMESA', 1),
+('Sundae de Chocolate', 'Sorvete de baunilha com calda de chocolate', 10.00, 'SOBREMESA', 1),
+('Sundae de Morango', 'Sorvete de baunilha com calda de morango', 10.00, 'SOBREMESA', 1);
