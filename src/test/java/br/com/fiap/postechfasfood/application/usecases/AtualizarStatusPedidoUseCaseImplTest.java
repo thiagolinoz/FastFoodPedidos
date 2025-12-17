@@ -56,16 +56,15 @@ class AtualizarStatusPedidoUseCaseImplTest {
     @Test
     @DisplayName("Deve atualizar status do pedido com sucesso")
     void deveAtualizarStatusComSucesso() {
-        // Arrange
+        // Given: um pedido existente com status RECEBIDO
         StatusPedido novoStatus = StatusPedido.EM_PREPARACAO;
-        
         when(pedidoRepository.buscarPorId(pedidoId)).thenReturn(Optional.of(pedidoMock));
         when(pedidoRepository.atualizar(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
+        // When: o status do pedido é atualizado para EM_PREPARACAO
         Pedido resultado = useCase.executar(pedidoId, novoStatus);
 
-        // Assert
+        // Then: o pedido deve ter o novo status e as operações devem ser realizadas corretamente
         assertNotNull(resultado);
         assertEquals(novoStatus, resultado.getStatus());
         verify(pedidoRepository).buscarPorId(pedidoId);
