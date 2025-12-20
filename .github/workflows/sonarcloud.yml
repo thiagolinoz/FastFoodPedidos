@@ -1,0 +1,41 @@
+name: SonarCloud Scan (Maven, Java 21)
+
+on:
+  push:
+    branches: ["main", "master", "pedidos_fase_4","conseumer_api_exernal"]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+env:
+  YOUR_PROJECT_KEY: thiagolinoz_FastFoodPedidos
+  YOUR_SONARCLOUD_ORGANIZATION: thiagolinoz
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 and cache Maven deps
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Cache Sonar
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+
+      - name: Build and analyze with Maven
+        run: |
+          mvn -B -DskipTests=true verify sonar:sonar \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ env.SONAR_TOKEN }} \
+            -Dsonar.projectKey=${{ env.YOUR_PROJECT_KEY }} \
+            -Dsonar.organization=${{ env.YOUR_SONARCLOUD_ORGANIZATION }}
