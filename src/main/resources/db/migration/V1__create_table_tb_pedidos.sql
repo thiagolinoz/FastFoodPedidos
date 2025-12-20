@@ -9,13 +9,13 @@ CREATE TABLE tb_pedidos (
     PRIMARY KEY (cd_pedido)
 ) ENGINE=InnoDB;
 
-ALTER TABLE tb_pedidos
-    ADD CONSTRAINT FK_PEDIDO_PESSOA_CDDOCCLIENTE FOREIGN KEY (cd_doc_cliente)
-        REFERENCES tb_pessoas(cd_doc_pessoa);
+--ALTER TABLE tb_pedidos
+--    ADD CONSTRAINT FK_PEDIDO_PESSOA_CDDOCCLIENTE FOREIGN KEY (cd_doc_cliente)
+--        REFERENCES tb_pessoas(cd_doc_pessoa);
 
-ALTER TABLE tb_pedidos
-    ADD CONSTRAINT FK_PEDIDO_PESSOA_CDDOCFUNCIONARIO FOREIGN KEY (cd_doc_funcionario)
-        REFERENCES tb_pessoas(cd_doc_pessoa);
+--ALTER TABLE tb_pedidos
+--    ADD CONSTRAINT FK_PEDIDO_PESSOA_CDDOCFUNCIONARIO FOREIGN KEY (cd_doc_funcionario)
+--        REFERENCES tb_pessoas(cd_doc_pessoa);
 
 --ENGINE: MARIADB
 --CREATE TABLE tb_pedidos
