@@ -7,14 +7,13 @@ CREATE TABLE tb_pagamentos
     dh_atualizacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     tp_status VARCHAR(100) NOT NULL DEFAULT 'PENDENTE_PAGAMENTO',
     PRIMARY KEY (cd_pagamento)
+    ALTER TABLE tb_pagamentos
+        ADD CONSTRAINT FK_PAGAMENTO_PEDIDO_CDPEDIDO
+            FOREIGN KEY (cd_pedido)
+            REFERENCES tb_pedidos(cd_pedido)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
 ) ENGINE=InnoDB;
-
-ALTER TABLE tb_pagamentos
-    ADD CONSTRAINT FK_PAGAMENTO_PEDIDO_CDPEDIDO
-        FOREIGN KEY (cd_pedido)
-        REFERENCES tb_pedidos(cd_pedido)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE;
 
 --ENGINE: MARIADB
 --CREATE TABLE tb_pagamentos
