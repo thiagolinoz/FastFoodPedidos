@@ -10,17 +10,17 @@ import br.com.fiap.postechfasfood.domain.valueobjects.StatusPagamento;
 import br.com.fiap.postechfasfood.domain.valueobjects.StatusPedido;
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.CheckoutPedidoRequest;
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.CheckoutPedidoRequest.ItemPedidoRequest;
-import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.PedidoResponse;
-import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.StatusPagamentoResponse;
+import br.com.fiap.postechfasfood.infrastructure.external.service.ProdutoExternoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,33 +34,44 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(PedidoController.class)
+@ExtendWith(MockitoExtension.class)
 @DisplayName("Testes do PedidoController")
 class PedidoControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @Mock
     private CadastrarPedidoUseCase cadastrarPedidoUseCase;
 
-    @MockBean
+    @Mock
     private AtualizarStatusPedidoUseCase atualizarStatusPedidoUseCase;
 
-    @MockBean
+    @Mock
     private ListarPedidosUseCase listarPedidosUseCase;
 
-    @MockBean
+    @Mock
     private ConsultarStatusPagamentoUseCase consultarStatusPagamentoUseCase;
+
+    @Mock
+    private ProdutoExternoService produtoExternoService;
 
     private Pedido pedidoMock;
     private CheckoutPedidoRequest checkoutRequest;
 
     @BeforeEach
     void setUp() {
+        objectMapper = new ObjectMapper();
+        PedidoController controller = new PedidoController(
+            cadastrarPedidoUseCase,
+            atualizarStatusPedidoUseCase,
+            listarPedidosUseCase,
+            consultarStatusPagamentoUseCase,
+            produtoExternoService
+        );
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+
         List<ItemPedido> itens = new ArrayList<>();
         itens.add(new ItemPedido("Hamburguer", "PROD-001", 2, 15.90));
 

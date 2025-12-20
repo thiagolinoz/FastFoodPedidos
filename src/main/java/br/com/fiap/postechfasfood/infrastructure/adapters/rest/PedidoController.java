@@ -1,6 +1,7 @@
 package br.com.fiap.postechfasfood.infrastructure.adapters.rest;
 
 import br.com.fiap.postechfasfood.domain.entities.Pedido;
+import br.com.fiap.postechfasfood.domain.entities.Produto;
 import br.com.fiap.postechfasfood.domain.ports.input.AtualizarStatusPedidoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.CadastrarPedidoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.ConsultarStatusPagamentoUseCase;
@@ -11,9 +12,11 @@ import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.CheckoutPedid
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.PedidoResponse;
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.StatusPagamentoResponse;
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.mapper.PedidoMapper;
+import br.com.fiap.postechfasfood.infrastructure.external.service.ProdutoExternoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,27 +27,18 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/pedidos")
 @Tag(name = "Pedidos", description = "API de Gestão de Pedidos")
+@RequiredArgsConstructor
 public class PedidoController {
-    
+
     private final CadastrarPedidoUseCase cadastrarPedidoUseCase;
     private final AtualizarStatusPedidoUseCase atualizarStatusPedidoUseCase;
     private final ListarPedidosUseCase listarPedidosUseCase;
     private final ConsultarStatusPagamentoUseCase consultarStatusPagamentoUseCase;
-    
-    public PedidoController(
-            CadastrarPedidoUseCase cadastrarPedidoUseCase,
-            AtualizarStatusPedidoUseCase atualizarStatusPedidoUseCase,
-            ListarPedidosUseCase listarPedidosUseCase,
-            ConsultarStatusPagamentoUseCase consultarStatusPagamentoUseCase) {
-        this.cadastrarPedidoUseCase = cadastrarPedidoUseCase;
-        this.atualizarStatusPedidoUseCase = atualizarStatusPedidoUseCase;
-        this.listarPedidosUseCase = listarPedidosUseCase;
-        this.consultarStatusPagamentoUseCase = consultarStatusPagamentoUseCase;
-    }
+    private final ProdutoExternoService produtoExternoService;
 
     @PostMapping("/checkout")
     @Operation(summary = "Realizar checkout", 
-               description = "Cria um novo pedido usando o nome do produto (não FK)")
+               description = "Cria um novo pedido usando o ID do produto (consumindo API externa) e valida CPF no MS de pessoas")
     public ResponseEntity<PedidoResponse> checkout(@Valid @RequestBody CheckoutPedidoRequest request) {
         // Converter DTO para objeto de domínio
         CadastrarPedidoUseCase.CadastrarPedidoRequest useCaseRequest = 
@@ -96,5 +90,17 @@ public class PedidoController {
         StatusPagamentoResponse response = PedidoMapper.toStatusPagamentoResponse(nrPedido, status);
         
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/produtos/{idProduto}")
+    @Operation(summary = "Buscar produto por ID",
+               description = "Busca um produto específico na API externa pelo ID")
+    public ResponseEntity<Produto> buscarProdutoPorId(@PathVariable String idProduto) {
+        try {
+            Produto produto = produtoExternoService.buscarProdutoPorId(idProduto);
+            return ResponseEntity.ok(produto);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

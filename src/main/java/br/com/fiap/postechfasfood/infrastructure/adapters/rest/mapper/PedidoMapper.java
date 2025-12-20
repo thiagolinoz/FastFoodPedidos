@@ -25,7 +25,7 @@ public class PedidoMapper {
         List<CadastrarPedidoUseCase.CadastrarPedidoRequest.ItemPedidoRequest> itens = 
             dto.itens().stream()
                 .map(item -> new CadastrarPedidoUseCase.CadastrarPedidoRequest.ItemPedidoRequest(
-                    item.nomeProduto(),
+                    item.idProduto(),
                     item.quantidade()
                 ))
                 .collect(Collectors.toList());

@@ -7,6 +7,7 @@ import br.com.fiap.postechfasfood.domain.ports.input.CadastrarPedidoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.output.CatalogoServicePort;
 import br.com.fiap.postechfasfood.domain.ports.output.PedidoRepositoryPort;
 import br.com.fiap.postechfasfood.domain.valueobjects.StatusPedido;
+import br.com.fiap.postechfasfood.infrastructure.external.service.PessoaExternaService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,12 +18,15 @@ public class CadastrarPedidoUseCaseImpl implements CadastrarPedidoUseCase {
     
     private final PedidoRepositoryPort pedidoRepository;
     private final CatalogoServicePort catalogoService;
-    
+    private final PessoaExternaService pessoaExternaService;
+
     public CadastrarPedidoUseCaseImpl(
             PedidoRepositoryPort pedidoRepository,
-            CatalogoServicePort catalogoService) {
+            CatalogoServicePort catalogoService,
+            PessoaExternaService pessoaExternaService) {
         this.pedidoRepository = pedidoRepository;
         this.catalogoService = catalogoService;
+        this.pessoaExternaService = pessoaExternaService;
     }
     
     @Override
@@ -31,15 +35,19 @@ public class CadastrarPedidoUseCaseImpl implements CadastrarPedidoUseCase {
             throw new IllegalArgumentException("Pedido deve conter pelo menos um item");
         }
 
+        // Verificar se CPF existe na API de pessoas
+        pessoaExternaService.verificarSeCpfExiste(request.documentoCliente());
+
         List<ItemPedido> itensPedido = new ArrayList<>();
         for (var itemRequest : request.itens()) {
-            Produto produto = catalogoService.buscarProdutoPorNome(itemRequest.nomeProduto())
+            // Buscar produto por ID na API externa
+            Produto produto = catalogoService.buscarProdutoPorCodigo(itemRequest.idProduto())
                 .orElseThrow(() -> new IllegalArgumentException(
-                    "Produto não encontrado: " + itemRequest.nomeProduto()));
-            
+                    "Produto não encontrado: " + itemRequest.idProduto()));
+
             if (!produto.isAtivo()) {
                 throw new IllegalArgumentException(
-                    "Produto não está disponível: " + itemRequest.nomeProduto());
+                    "Produto não está disponível: " + itemRequest.idProduto());
             }
             
             ItemPedido item = new ItemPedido(

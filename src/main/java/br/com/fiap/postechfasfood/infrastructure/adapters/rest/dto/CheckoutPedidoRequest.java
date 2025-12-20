@@ -17,9 +17,9 @@ public record CheckoutPedidoRequest(
     List<ItemPedidoRequest> itens
 ) {
     public record ItemPedidoRequest(
-        @NotNull(message = "Nome do produto é obrigatório")
-        String nomeProduto,
-        
+        @NotNull(message = "ID do produto é obrigatório")
+        String idProduto,
+
         @NotNull(message = "Quantidade é obrigatória")
         @Positive(message = "Quantidade deve ser maior que zero")
         Integer quantidade

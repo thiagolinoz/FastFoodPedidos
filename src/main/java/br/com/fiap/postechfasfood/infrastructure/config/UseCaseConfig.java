@@ -6,6 +6,7 @@ import br.com.fiap.postechfasfood.domain.ports.output.CatalogoServicePort;
 import br.com.fiap.postechfasfood.domain.ports.output.PagamentoRepositoryPort;
 import br.com.fiap.postechfasfood.domain.ports.output.PagamentoServicePort;
 import br.com.fiap.postechfasfood.domain.ports.output.PedidoRepositoryPort;
+import br.com.fiap.postechfasfood.infrastructure.external.service.PessoaExternaService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,8 +16,9 @@ public class UseCaseConfig {
     @Bean
     public CadastrarPedidoUseCase cadastrarPedidoUseCase(
             PedidoRepositoryPort pedidoRepository,
-            CatalogoServicePort catalogoService) {
-        return new CadastrarPedidoUseCaseImpl(pedidoRepository, catalogoService);
+            CatalogoServicePort catalogoService,
+            PessoaExternaService pessoaExternaService) {
+        return new CadastrarPedidoUseCaseImpl(pedidoRepository, catalogoService, pessoaExternaService);
     }
 
     @Bean

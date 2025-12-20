@@ -13,7 +13,7 @@ public interface CadastrarPedidoUseCase {
         List<ItemPedidoRequest> itens
     ) {
         public record ItemPedidoRequest(
-            String nomeProduto,
+            String idProduto,
             int quantidade
         ) {}
     }

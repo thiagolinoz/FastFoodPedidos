@@ -7,14 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Service;
+// import org.springframework.stereotype.Service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 
-@Service
+// @Service - Desabilitado para usar apenas APIs externas
 public class CatalogoServiceAdapter implements CatalogoServicePort {
     
     private static final Logger logger = LoggerFactory.getLogger(CatalogoServiceAdapter.class);
@@ -50,17 +51,37 @@ public class CatalogoServiceAdapter implements CatalogoServicePort {
     public Optional<Produto> buscarProdutoPorCodigo(String codigoProduto) {
         logger.info("Consultando catálogo externo para código: {}", codigoProduto);
         
+        // Primeiro, vamos verificar se há produtos na tabela
+        String countSql = "SELECT COUNT(*) FROM tb_produtos";
+        Integer totalProdutos = jdbcTemplate.queryForObject(countSql, Integer.class);
+        logger.info("Total de produtos na tabela: {}", totalProdutos);
+
+        // Query case-insensitive e com trim
         String sql = """
             SELECT cd_produto, nm_produto, ds_descricao, vl_preco, sn_ativo, tp_categoria 
             FROM tb_produtos 
-            WHERE cd_produto = ?
+            WHERE LOWER(TRIM(cd_produto)) = LOWER(TRIM(?))
         """;
         
         try {
+            logger.info("Executando query: {}", sql);
+            logger.info("Parâmetro: '{}'", codigoProduto);
+
             Produto produto = jdbcTemplate.queryForObject(sql, new ProdutoRowMapper(), codigoProduto);
+            logger.info("Produto encontrado: {}", produto);
             return Optional.ofNullable(produto);
+
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            logger.warn("Nenhum produto encontrado para código: '{}'", codigoProduto);
+
+            // Vamos listar alguns produtos para debug
+            String debugSql = "SELECT cd_produto FROM tb_produtos LIMIT 5";
+            List<String> codigosExistentes = jdbcTemplate.queryForList(debugSql, String.class);
+            logger.info("Primeiros 5 códigos na tabela: {}", codigosExistentes);
+
+            return Optional.empty();
         } catch (Exception e) {
-            logger.warn("Produto não encontrado no catálogo: {}", codigoProduto);
+            logger.error("Erro ao buscar produto no catálogo: {}", e.getMessage());
             return Optional.empty();
         }
     }
