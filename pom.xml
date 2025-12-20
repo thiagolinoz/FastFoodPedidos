@@ -92,7 +92,6 @@
             <version>${springdoc-openapi.version}</version>
         </dependency>
 
-        <!-- OpenFeign para consumo de APIs externas -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
