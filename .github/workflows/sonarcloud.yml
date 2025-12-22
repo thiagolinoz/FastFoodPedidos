@@ -13,7 +13,8 @@ env:
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
 jobs:
-  sonarcloud:
+  test:
+    name: Run tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,13 +27,25 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Cache Sonar
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
+      - name: Run unit tests
+        run: mvn -B test
 
-      - name: Build and analyze with Maven
+  sonar:
+    name: SonarCloud analysis
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 and cache Maven deps
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Run Sonar analysis
         run: |
           mvn -B -DskipTests=true verify sonar:sonar \
             -Dsonar.host.url=https://sonarcloud.io \

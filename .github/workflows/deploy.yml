@@ -3,11 +3,11 @@ name: CI/CD com Dockerfile
 on:
   push:
     branches:
-      - separando_applicação
+      - main
 
 env:
   EKS_CLUSTER_NAME: eks-postech-fiap-fastfood
-  ECR_REPOSITORY: postech-fiap-fastfood
+  ECR_REPOSITORY: fastfood-pedidos
   AWS_REGION: us-east-1
 
 jobs:
