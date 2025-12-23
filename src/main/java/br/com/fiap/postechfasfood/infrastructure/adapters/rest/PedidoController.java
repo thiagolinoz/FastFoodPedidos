@@ -2,6 +2,7 @@ package br.com.fiap.postechfasfood.infrastructure.adapters.rest;
 
 import br.com.fiap.postechfasfood.domain.entities.Pedido;
 import br.com.fiap.postechfasfood.domain.entities.Produto;
+import br.com.fiap.postechfasfood.domain.exception.PessoaNaoEncontradaException;
 import br.com.fiap.postechfasfood.domain.ports.input.AtualizarStatusPedidoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.CadastrarPedidoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.ConsultarStatusPagamentoUseCase;
@@ -12,22 +13,26 @@ import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.CheckoutPedid
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.PedidoResponse;
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.StatusPagamentoResponse;
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.mapper.PedidoMapper;
+import br.com.fiap.postechfasfood.infrastructure.external.service.PessoaExternaService;
 import br.com.fiap.postechfasfood.infrastructure.external.service.ProdutoExternoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
 @RequestMapping("/api/v1/pedidos")
 @Tag(name = "Pedidos", description = "API de Gestão de Pedidos")
 @RequiredArgsConstructor
+@Slf4j
 public class PedidoController {
 
     private final CadastrarPedidoUseCase cadastrarPedidoUseCase;
@@ -35,12 +40,12 @@ public class PedidoController {
     private final ListarPedidosUseCase listarPedidosUseCase;
     private final ConsultarStatusPagamentoUseCase consultarStatusPagamentoUseCase;
     private final ProdutoExternoService produtoExternoService;
+    private final PessoaExternaService pessoaExternaService;
 
     @PostMapping("/checkout")
     @Operation(summary = "Realizar checkout", 
                description = "Cria um novo pedido usando o ID do produto (consumindo API externa) e valida CPF no MS de pessoas")
     public ResponseEntity<PedidoResponse> checkout(@Valid @RequestBody CheckoutPedidoRequest request) {
-        // Converter DTO para objeto de domínio
         CadastrarPedidoUseCase.CadastrarPedidoRequest useCaseRequest = 
             PedidoMapper.toUseCaseRequest(request);
 
@@ -101,6 +106,40 @@ public class PedidoController {
             return ResponseEntity.ok(produto);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/debug/pessoa/{cpf}")
+    @Operation(summary = "Debug - Testar API de pessoas",
+               description = "Endpoint para debug da integração com API de pessoas")
+    public ResponseEntity<?> debugPessoa(@PathVariable String cpf) {
+        try {
+            log.info("DEBUG - Testando CPF: {}", cpf);
+
+            // Chamar diretamente o service para debug
+            pessoaExternaService.verificarSeCpfExiste(cpf);
+
+            return ResponseEntity.ok(Map.of(
+                "cpf", cpf,
+                "status", "ENCONTRADO_E_ATIVO",
+                "message", "CPF encontrado e pessoa está ativa"
+            ));
+
+        } catch (PessoaNaoEncontradaException e) {
+            log.warn("DEBUG - CPF {} não encontrado: {}", cpf, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "cpf", cpf,
+                "status", "NAO_ENCONTRADO_OU_INATIVO",
+                "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("DEBUG - Erro inesperado para CPF {}: {}", cpf, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "cpf", cpf,
+                "status", "ERRO",
+                "message", e.getMessage(),
+                "type", e.getClass().getSimpleName()
+            ));
         }
     }
 }

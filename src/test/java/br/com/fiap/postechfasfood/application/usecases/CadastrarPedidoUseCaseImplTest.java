@@ -3,7 +3,7 @@ package br.com.fiap.postechfasfood.application.usecases;
 import br.com.fiap.postechfasfood.domain.entities.ItemPedido;
 import br.com.fiap.postechfasfood.domain.entities.Pedido;
 import br.com.fiap.postechfasfood.domain.entities.Produto;
-import br.com.fiap.postechfasfood.domain.exception.ClienteNaoCadastradoException;
+import br.com.fiap.postechfasfood.domain.exception.PessoaNaoEncontradaException;
 import br.com.fiap.postechfasfood.domain.ports.input.CadastrarPedidoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.output.CatalogoServicePort;
 import br.com.fiap.postechfasfood.domain.ports.output.PedidoRepositoryPort;
@@ -240,8 +240,8 @@ class CadastrarPedidoUseCaseImplTest {
         // Arrange
         String cpfInexistente = "99999999999";
 
-        // Mock: CPF não encontrado
-        doThrow(new ClienteNaoCadastradoException(cpfInexistente))
+        // Mock: CPF não encontrado - lança PessoaNaoEncontradaException
+        doThrow(new PessoaNaoEncontradaException("CPF " + cpfInexistente + " não encontrado"))
             .when(pessoaExternaService).verificarSeCpfExiste(cpfInexistente);
 
         CadastrarPedidoUseCase.CadastrarPedidoRequest request =
@@ -253,17 +253,118 @@ class CadastrarPedidoUseCaseImplTest {
             );
 
         // Act & Assert
-        ClienteNaoCadastradoException exception = assertThrows(
-            ClienteNaoCadastradoException.class,
+        PessoaNaoEncontradaException exception = assertThrows(
+            PessoaNaoEncontradaException.class,
             () -> useCase.executar(request)
         );
 
-        assertTrue(exception.getMessage().contains("Cliente não cadastrado"));
+        assertTrue(exception.getMessage().contains("não encontrado"));
         assertTrue(exception.getMessage().contains(cpfInexistente));
 
         // Verificar que não tentou buscar produtos nem salvar pedido
         verify(pessoaExternaService, times(1)).verificarSeCpfExiste(cpfInexistente);
         verify(catalogoService, never()).buscarProdutoPorCodigo(anyString());
         verify(pedidoRepository, never()).salvar(any(Pedido.class));
+    }
+
+    @Test
+    @DisplayName("Deve criar pedido anônimo quando CPF não é informado")
+    void deveCriarPedidoAnonimoQuandoCpfNaoInformado() {
+        // Arrange
+        String idProduto = "lanche-001";
+        Produto produto = new Produto(
+            idProduto,
+            "X-Burger",
+            "Hambúrguer delicioso",
+            25.90,
+            true,
+            CategoriaProduto.LANCHE
+        );
+
+        // Mock da validação de CPF - deve aceitar CPF nulo/vazio
+        doNothing().when(pessoaExternaService).verificarSeCpfExiste(null);
+
+        // Mock do catálogo
+        when(catalogoService.buscarProdutoPorCodigo(idProduto))
+            .thenReturn(Optional.of(produto));
+
+        // Mock do repositório
+        when(pedidoRepository.gerarProximoNumeroPedido()).thenReturn(1);
+        when(pedidoRepository.salvar(any(Pedido.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Request com CPF null (pedido anônimo)
+        CadastrarPedidoUseCase.CadastrarPedidoRequest request =
+            new CadastrarPedidoUseCase.CadastrarPedidoRequest(
+                null, // CPF null para pedido anônimo
+                List.of(new CadastrarPedidoUseCase.CadastrarPedidoRequest.ItemPedidoRequest(
+                    idProduto, 2
+                ))
+            );
+
+        // Act
+        Pedido pedido = useCase.executar(request);
+
+        // Assert
+        assertNotNull(pedido);
+        assertEquals(StatusPedido.AGUARDANDO_PAGAMENTO, pedido.getStatus());
+        assertEquals(1, pedido.getNumeroPedido());
+        assertNull(pedido.getDocumentoCliente()); // CPF deve ser null para pedido anônimo
+        assertEquals(1, pedido.getItens().size());
+
+        ItemPedido item = pedido.getItens().getFirst();
+        assertEquals(2, item.getQuantidade());
+        assertEquals(25.90, item.getPrecoUnitario());
+        assertEquals("X-Burger", item.getNomeProduto());
+
+        verify(pessoaExternaService, times(1)).verificarSeCpfExiste(null);
+        verify(catalogoService, times(1)).buscarProdutoPorCodigo(idProduto);
+        verify(pedidoRepository, times(1)).gerarProximoNumeroPedido();
+        verify(pedidoRepository, times(1)).salvar(any(Pedido.class));
+    }
+
+    @Test
+    @DisplayName("Deve criar pedido anônimo quando CPF é string vazia")
+    void deveCriarPedidoAnonimoQuandoCpfStringVazia() {
+        // Arrange
+        String cpfVazio = "";
+        String idProduto = "lanche-001";
+        Produto produto = new Produto(
+            idProduto,
+            "X-Burger",
+            "Hambúrguer delicioso",
+            25.90,
+            true,
+            CategoriaProduto.LANCHE
+        );
+
+        // Mock da validação de CPF - deve aceitar CPF vazio
+        doNothing().when(pessoaExternaService).verificarSeCpfExiste(cpfVazio);
+
+        when(catalogoService.buscarProdutoPorCodigo(idProduto))
+            .thenReturn(Optional.of(produto));
+
+        when(pedidoRepository.gerarProximoNumeroPedido()).thenReturn(1);
+        when(pedidoRepository.salvar(any(Pedido.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Request com CPF vazio
+        CadastrarPedidoUseCase.CadastrarPedidoRequest request =
+            new CadastrarPedidoUseCase.CadastrarPedidoRequest(
+                cpfVazio,
+                List.of(new CadastrarPedidoUseCase.CadastrarPedidoRequest.ItemPedidoRequest(
+                    idProduto, 1
+                ))
+            );
+
+        // Act
+        Pedido pedido = useCase.executar(request);
+
+        // Assert
+        assertNotNull(pedido);
+        assertEquals(cpfVazio, pedido.getDocumentoCliente());
+        assertEquals(StatusPedido.AGUARDANDO_PAGAMENTO, pedido.getStatus());
+
+        verify(pessoaExternaService, times(1)).verificarSeCpfExiste(cpfVazio);
     }
 }
