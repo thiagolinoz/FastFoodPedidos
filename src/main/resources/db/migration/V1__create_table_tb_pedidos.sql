@@ -1,0 +1,32 @@
+CREATE TABLE tb_pedidos (
+    cd_pedido CHAR(36) NOT NULL,
+    cd_doc_cliente CHAR(11),
+    cd_doc_funcionario CHAR(11),
+    tx_status VARCHAR(200) NOT NULL, -- AGUARDANDO_PAGAMENTO, RECEBIDO, EM_PREPARACAO, PRONTO, FINALIZADO
+    nr_pedido INT NOT NULL DEFAULT 0,
+    dh_criacao_pedido TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    dh_ult_atualizacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (cd_pedido)
+) ENGINE=InnoDB;
+
+CREATE TABLE tb_pagamentos (
+    cd_pagamento VARCHAR(36) NOT NULL,
+    cd_pedido VARCHAR(36) NOT NULL,
+    nr_pedido INT NOT NULL,
+    tx_status_pagamento VARCHAR(50) NOT NULL DEFAULT 'PENDENTE', -- APROVADO, RECUSADO, PENDENTE
+    vl_pagamento DECIMAL(10,2) NOT NULL,
+    dh_pagamento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tx_transacao_id VARCHAR(100) NULL,
+    tx_origem VARCHAR(50) NULL, -- MERCADO_PAGO, PIX, OUTRO
+    dh_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    dh_atualizacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (cd_pagamento),
+    CONSTRAINT FK_PAGAMENTO_PEDIDO
+        FOREIGN KEY (cd_pedido)
+        REFERENCES tb_pedidos(cd_pedido)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    INDEX IDX_PAGAMENTO_PEDIDO (cd_pedido),
+    INDEX IDX_PAGAMENTO_NR_PEDIDO (nr_pedido),
+    INDEX IDX_PAGAMENTO_STATUS (tx_status_pagamento)
+) ENGINE=InnoDB;

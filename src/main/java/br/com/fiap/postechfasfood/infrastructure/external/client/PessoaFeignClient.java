@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(
     name = "pessoa-service",
-    url = "${app.external.pessoas.url:http://localhost:9000}"
+    url = "${app.external.pessoas.url}"
 )
 public interface PessoaFeignClient {
 

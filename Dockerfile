@@ -42,3 +42,8 @@ ENV JAVA_OPTS="-Xms256m -Xmx512m"
 
 # Executar aplicação
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+#FROM eclipse-temurin:21-jdk
+#RUN adduser postech-fastfood
+#USER postech-fastfood:postech-fastfood
+#COPY ./target/postech-fastfood.jar app.jar
+#ENTRYPOINT ["java","-jar","app.jar"]
