@@ -10,7 +10,7 @@ CREATE TABLE tb_pedidos (
     UNIQUE KEY UK_PEDIDO_NUMERO (nr_pedido),
     INDEX IDX_PEDIDO_STATUS (tx_status),
     INDEX IDX_PEDIDO_CRIACAO (dh_criacao_pedido)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB;
 
 CREATE TABLE tb_pagamentos (
     cd_pagamento VARCHAR(36) NOT NULL,
