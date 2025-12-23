@@ -10,6 +10,7 @@ import br.com.fiap.postechfasfood.domain.valueobjects.StatusPagamento;
 import br.com.fiap.postechfasfood.domain.valueobjects.StatusPedido;
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.CheckoutPedidoRequest;
 import br.com.fiap.postechfasfood.infrastructure.adapters.rest.dto.CheckoutPedidoRequest.ItemPedidoRequest;
+import br.com.fiap.postechfasfood.infrastructure.external.service.PessoaExternaService;
 import br.com.fiap.postechfasfood.infrastructure.external.service.ProdutoExternoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +58,9 @@ class PedidoControllerTest {
     @Mock
     private ProdutoExternoService produtoExternoService;
 
+    @Mock
+    private PessoaExternaService pessoaExternaService;
+
     private Pedido pedidoMock;
     private CheckoutPedidoRequest checkoutRequest;
 
@@ -68,7 +72,8 @@ class PedidoControllerTest {
             atualizarStatusPedidoUseCase,
             listarPedidosUseCase,
             consultarStatusPagamentoUseCase,
-            produtoExternoService
+            produtoExternoService,
+            pessoaExternaService
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 

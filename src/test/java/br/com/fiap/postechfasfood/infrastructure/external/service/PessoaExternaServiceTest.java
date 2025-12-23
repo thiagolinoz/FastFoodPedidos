@@ -1,6 +1,6 @@
 package br.com.fiap.postechfasfood.infrastructure.external.service;
 
-import br.com.fiap.postechfasfood.domain.exception.ClienteNaoCadastradoException;
+import br.com.fiap.postechfasfood.domain.exception.PessoaNaoEncontradaException;
 import br.com.fiap.postechfasfood.infrastructure.external.client.PessoaFeignClient;
 import br.com.fiap.postechfasfood.infrastructure.external.dto.PessoaExternaDTO;
 import feign.FeignException;
@@ -29,105 +29,108 @@ class PessoaExternaServiceTest {
     }
 
     @Test
-    @DisplayName("Deve verificar CPF existente com sucesso")
-    void deveVerificarCpfExistenteComSucesso() {
+    @DisplayName("Deve permitir pedido anônimo quando CPF é null")
+    void devePermitirPedidoAnonimoQuandoCpfNulo() {
+        // Act & Assert - não deve lançar exceção
+        assertDoesNotThrow(() -> pessoaExternaService.verificarSeCpfExiste(null));
+
+        // Não deve chamar API externa
+        verify(pessoaFeignClient, never()).buscarPessoaPorCpf(any());
+    }
+
+    @Test
+    @DisplayName("Deve permitir pedido anônimo quando CPF é vazio")
+    void devePermitirPedidoAnonimoQuandoCpfVazio() {
+        // Act & Assert - não deve lançar exceção
+        assertDoesNotThrow(() -> pessoaExternaService.verificarSeCpfExiste(""));
+        assertDoesNotThrow(() -> pessoaExternaService.verificarSeCpfExiste("   "));
+
+        // Não deve chamar API externa
+        verify(pessoaFeignClient, never()).buscarPessoaPorCpf(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando CPF não encontrado na API externa")
+    void deveLancarExcecaoQuandoCpfNaoEncontrado() {
         // Arrange
-        String cpf = "12345678900";
-        PessoaExternaDTO pessoaDto = new PessoaExternaDTO();
-        pessoaDto.setCpf(cpf);
-        pessoaDto.setNome("João Silva");
+        String cpf = "99999999999";
+        when(pessoaFeignClient.buscarPessoaPorCpf(cpf))
+            .thenThrow(FeignException.NotFound.class);
 
-        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(pessoaDto);
+        // Act & Assert - A exceção será capturada pelo GlobalExceptionHandler que retornará 204
+        PessoaNaoEncontradaException exception = assertThrows(
+            PessoaNaoEncontradaException.class,
+            () -> pessoaExternaService.verificarSeCpfExiste(cpf)
+        );
 
-        // Act & Assert
+        assertTrue(exception.getMessage().contains("não encontrado"));
+        assertTrue(exception.getMessage().contains(cpf));
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando API retorna pessoa null")
+    void deveLancarExcecaoQuandoPessoaNull() {
+        // Arrange
+        String cpf = "12345678901";
+        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(null);
+
+        // Act & Assert - A exceção será capturada pelo GlobalExceptionHandler que retornará 204
+        PessoaNaoEncontradaException exception = assertThrows(
+            PessoaNaoEncontradaException.class,
+            () -> pessoaExternaService.verificarSeCpfExiste(cpf)
+        );
+
+        assertTrue(exception.getMessage().contains("não encontrado"));
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando pessoa está inativa")
+    void deveLancarExcecaoQuandoPessoaInativa() {
+        // Arrange
+        String cpf = "12345678901";
+        PessoaExternaDTO pessoaInativa = new PessoaExternaDTO();
+        pessoaInativa.setCpf(cpf);
+        pessoaInativa.setNome("João Silva");
+        pessoaInativa.setEmail("joao@teste.com");
+        pessoaInativa.setAtivo(false); // PESSOA INATIVA
+
+        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(pessoaInativa);
+
+        // Act & Assert - A exceção será capturada pelo GlobalExceptionHandler que retornará 204
+        PessoaNaoEncontradaException exception = assertThrows(
+            PessoaNaoEncontradaException.class,
+            () -> pessoaExternaService.verificarSeCpfExiste(cpf)
+        );
+
+        assertTrue(exception.getMessage().contains("não está ativa"));
+    }
+
+    @Test
+    @DisplayName("Deve validar com sucesso quando pessoa ativa existe")
+    void deveValidarComSucessoQuandoPessoaAtivaExiste() {
+        // Arrange
+        String cpf = "12345678901";
+        PessoaExternaDTO pessoaAtiva = new PessoaExternaDTO();
+        pessoaAtiva.setCpf(cpf);
+        pessoaAtiva.setNome("João Silva");
+        pessoaAtiva.setEmail("joao@teste.com");
+        pessoaAtiva.setAtivo(true); // PESSOA ATIVA
+
+        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(pessoaAtiva);
+
+        // Act & Assert - não deve lançar exceção
         assertDoesNotThrow(() -> pessoaExternaService.verificarSeCpfExiste(cpf));
 
         verify(pessoaFeignClient, times(1)).buscarPessoaPorCpf(cpf);
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando CPF for nulo")
-    void deveLancarExcecaoQuandoCpfForNulo() {
-        // Act & Assert
-        ClienteNaoCadastradoException exception = assertThrows(
-            ClienteNaoCadastradoException.class,
-            () -> pessoaExternaService.verificarSeCpfExiste(null)
-        );
-
-        assertEquals("Cliente não cadastrado para o CPF: CPF não informado", exception.getMessage());
-        verify(pessoaFeignClient, never()).buscarPessoaPorCpf(any());
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando CPF for vazio")
-    void deveLancarExcecaoQuandoCpfForVazio() {
-        // Act & Assert
-        ClienteNaoCadastradoException exception = assertThrows(
-            ClienteNaoCadastradoException.class,
-            () -> pessoaExternaService.verificarSeCpfExiste("")
-        );
-
-        assertEquals("Cliente não cadastrado para o CPF: CPF não informado", exception.getMessage());
-        verify(pessoaFeignClient, never()).buscarPessoaPorCpf(any());
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando CPF for apenas espaços")
-    void deveLancarExcecaoQuandoCpfForApenasEspacos() {
-        // Act & Assert
-        ClienteNaoCadastradoException exception = assertThrows(
-            ClienteNaoCadastradoException.class,
-            () -> pessoaExternaService.verificarSeCpfExiste("   ")
-        );
-
-        assertEquals("Cliente não cadastrado para o CPF: CPF não informado", exception.getMessage());
-        verify(pessoaFeignClient, never()).buscarPessoaPorCpf(any());
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando API retornar null")
-    void deveLancarExcecaoQuandoApiRetornarNull() {
+    @DisplayName("Deve lançar exceção runtime quando erro na API externa")
+    void deveLancarExcecaoRuntimeQuandoErroApiExterna() {
         // Arrange
-        String cpf = "12345678900";
-        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(null);
-
-        // Act & Assert
-        RuntimeException exception = assertThrows(
-            RuntimeException.class,
-            () -> pessoaExternaService.verificarSeCpfExiste(cpf)
-        );
-
-        assertTrue(exception.getMessage().contains("Erro interno ao verificar CPF"));
-        verify(pessoaFeignClient, times(1)).buscarPessoaPorCpf(cpf);
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando API retornar 404 Not Found")
-    void deveLancarExcecaoQuandoApiRetornar404NotFound() {
-        // Arrange
-        String cpf = "99999999999";
-        FeignException.NotFound notFoundException = mock(FeignException.NotFound.class);
-        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenThrow(notFoundException);
-
-        // Act & Assert
-        ClienteNaoCadastradoException exception = assertThrows(
-            ClienteNaoCadastradoException.class,
-            () -> pessoaExternaService.verificarSeCpfExiste(cpf)
-        );
-
-        assertTrue(exception.getMessage().contains(cpf));
-        verify(pessoaFeignClient, times(1)).buscarPessoaPorCpf(cpf);
-    }
-
-    @Test
-    @DisplayName("Deve lançar RuntimeException para outros erros Feign")
-    void deveLancarRuntimeExceptionParaOutrosErrosFeign() {
-        // Arrange
-        String cpf = "12345678900";
-        FeignException feignException = mock(FeignException.class);
-        when(feignException.status()).thenReturn(500);
-        when(feignException.getMessage()).thenReturn("Internal Server Error");
-        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenThrow(feignException);
+        String cpf = "12345678901";
+        when(pessoaFeignClient.buscarPessoaPorCpf(cpf))
+            .thenThrow(FeignException.InternalServerError.class);
 
         // Act & Assert
         RuntimeException exception = assertThrows(
@@ -136,65 +139,27 @@ class PessoaExternaServiceTest {
         );
 
         assertTrue(exception.getMessage().contains("Erro ao comunicar com serviço de pessoas"));
-        assertTrue(exception.getCause() instanceof FeignException);
-        verify(pessoaFeignClient, times(1)).buscarPessoaPorCpf(cpf);
     }
 
     @Test
-    @DisplayName("Deve lançar RuntimeException para exceções gerais")
-    void deveLancarRuntimeExceptionParaExcecoesGerais() {
+    @DisplayName("Deve lançar exceção quando campo ativo é null")
+    void deveLancarExcecaoQuandoCampoAtivoNull() {
         // Arrange
-        String cpf = "12345678900";
-        RuntimeException runtimeException = new RuntimeException("Erro inesperado");
-        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenThrow(runtimeException);
+        String cpf = "12345678901";
+        PessoaExternaDTO pessoaComAtivoNull = new PessoaExternaDTO();
+        pessoaComAtivoNull.setCpf(cpf);
+        pessoaComAtivoNull.setNome("João Silva");
+        pessoaComAtivoNull.setEmail("joao@teste.com");
+        pessoaComAtivoNull.setAtivo(null); // CAMPO ATIVO NULL
 
-        // Act & Assert
-        RuntimeException exception = assertThrows(
-            RuntimeException.class,
+        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(pessoaComAtivoNull);
+
+        // Act & Assert - Deve tratar null como inativo
+        PessoaNaoEncontradaException exception = assertThrows(
+            PessoaNaoEncontradaException.class,
             () -> pessoaExternaService.verificarSeCpfExiste(cpf)
         );
 
-        assertTrue(exception.getMessage().contains("Erro interno ao verificar CPF"));
-        assertEquals(runtimeException, exception.getCause());
-        verify(pessoaFeignClient, times(1)).buscarPessoaPorCpf(cpf);
-    }
-
-    @Test
-    @DisplayName("Deve aceitar CPF com espaços ao redor mas não vazio")
-    void deveAceitarCpfComEspacosAoRedorMasNaoVazio() {
-        // Arrange
-        String cpfComEspacos = "  12345678900  ";
-        PessoaExternaDTO pessoaDto = new PessoaExternaDTO();
-        pessoaDto.setCpf("12345678900");
-        pessoaDto.setNome("João Silva");
-
-        when(pessoaFeignClient.buscarPessoaPorCpf(cpfComEspacos)).thenReturn(pessoaDto);
-
-        // Act & Assert
-        assertDoesNotThrow(() -> pessoaExternaService.verificarSeCpfExiste(cpfComEspacos));
-
-        verify(pessoaFeignClient, times(1)).buscarPessoaPorCpf(cpfComEspacos);
-    }
-
-    @Test
-    @DisplayName("Deve verificar diferentes formatos de CPF")
-    void deveVerificarDiferentesFormatosDeCpf() {
-        // Arrange
-        String[] cpfs = {
-            "12345678900",
-            "123.456.789-00",
-            "000.000.000-00"
-        };
-
-        for (String cpf : cpfs) {
-            PessoaExternaDTO pessoaDto = new PessoaExternaDTO();
-            pessoaDto.setCpf(cpf);
-            when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(pessoaDto);
-
-            // Act & Assert
-            assertDoesNotThrow(() -> pessoaExternaService.verificarSeCpfExiste(cpf));
-        }
-
-        verify(pessoaFeignClient, times(cpfs.length)).buscarPessoaPorCpf(any());
+        assertTrue(exception.getMessage().contains("não está ativa"));
     }
 }

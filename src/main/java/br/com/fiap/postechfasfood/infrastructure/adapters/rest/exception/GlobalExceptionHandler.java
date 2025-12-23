@@ -1,5 +1,6 @@
 package br.com.fiap.postechfasfood.infrastructure.adapters.rest.exception;
 
+import br.com.fiap.postechfasfood.domain.exception.PessoaNaoEncontradaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +56,34 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    @ExceptionHandler(PessoaNaoEncontradaException.class)
+    public ResponseEntity<ErrorResponse> handlePessoaNaoEncontradaException(
+            PessoaNaoEncontradaException ex, HttpServletRequest request) {
+
+        logger.warn("Pessoa não encontrada: {}", ex.getMessage());
+
+        String userAgent = request.getHeader("User-Agent");
+        String referer = request.getHeader("Referer");
+
+        boolean isSwaggerRequest = (userAgent != null && userAgent.toLowerCase().contains("swagger")) ||
+                                 (referer != null && referer.contains("/swagger-ui"));
+
+        if (isSwaggerRequest) {
+            return ResponseEntity.noContent().build();
+        } else {
+            ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                204,
+                "CPF do cliente não encontrado",
+                null
+            );
+
+            return ResponseEntity.status(204)
+                .header("Content-Type", "application/json")
+                .body(errorResponse);
+        }
     }
 
     @ExceptionHandler(IllegalStateException.class)
