@@ -1,7 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: app-config
+  name: app-pedidos-config
 data:
-  DATASOURCE_URL: "jdbc:mysql://fiap-fastfood-aurora-instance-1.cf2s0828wety.us-east-1.rds.amazonaws.com:3306/fiapfastfood" #"jdbc:mariadb://fastfood-db-service:3306/fiap-fastfood"
-  MARIADB_DATABASE: "fiapfastfood"
+  DATASOURCE_URL: "jdbc:mysql://fiap-fastfood-pedidos-aurora-instance-1.cleow80o855h.us-east-1.rds.amazonaws.com:3306/fiapfastfoodPedidos"
+  MARIADB_DATABASE: "fiapfastfoodPedidos"
+  PRODUTOS_API_URL: "http://ae1aaff4b8fa844ceb0a92adcb6106b0-1722779566.us-east-1.elb.amazonaws.com"
+  PESSOAS_API_URL: "http://aab97b2c03e154aecadc9386e39bec35-823143146.us-east-1.elb.amazonaws.com"

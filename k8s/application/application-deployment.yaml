@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-java
+  name: app-pedidos-java
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: java-app
+      app: app-pedidos-java
   template:
     metadata:
       labels:
-        app: java-app
+        app: app-pedidos-java
     spec:
       containers:
-        - name: java-app
-          image: devthiagosouza/fiap_postech_pedidos:latest #REPO_ECR #maycondockeraccount/k8s:latest #maycondockeraccount/fiap-fastfood #alexguimaraes21/fiap-fastfood:latest
+        - name: app-pedidos-java
+          image: REPO_ECR #devthiagosouza/fiap_postech_pedidos:latest #maycondockeraccount/k8s:latest #maycondockeraccount/fiap-fastfood #alexguimaraes21/fiap-fastfood:latest
           # endpoint da imagem de teste k8s = http://localhost:8080/api/v1/mockApi
           resources:
             requests:
@@ -25,44 +25,56 @@ spec:
               memory: "256Mi" # Limite de 256 megabytes de memória
           ports:
             - containerPort: 8080
-#            - name: TZ
-#              valueFrom:
-#                secretKeyRef:
-#                  name: app-secret
-#                  key: TZ
-#
+          #            - name: TZ
+          #              valueFrom:
+          #                secretKeyRef:
+          #                  name: app-secret
+          #                  key: TZ
+          #
           env:
-#            - name: TZ
-#              valueFrom:
-#                secretKeyRef:
-#                  name: app-secret
-#                  key: TZ
+            #            - name: TZ
+            #              valueFrom:
+            #                secretKeyRef:
+            #                  name: app-secret
+            #                  key: TZ
             - name: DATASOURCE_URL
               valueFrom:
                 configMapKeyRef:
-                  name: app-config
+                  name: app-pedidos-config
                   key: DATASOURCE_URL
+
+            - name: PESSOAS_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-pedidos-config
+                  key: PESSOAS_API_URL
+
+            - name: PRODUTOS_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-pedidos-config
+                  key: PRODUTOS_API_URL
 
             - name: DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: app-secret
+                  name: app-pedidos-secret
                   key: DATASOURCE_USERNAME
 
             - name: DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: app-secret
+                  name: app-pedidos-secret
                   key: DATASOURCE_PASSWORD
 
             - name: DATASOURCE_POOL-NAME
               valueFrom:
                 secretKeyRef:
-                  name: app-secret
+                  name: app-pedidos-secret
                   key: DATASOURCE_POOL-NAME
 
             - name: DATASOURCE_MAXIMUM-POOL-SIZE
               valueFrom:
                 secretKeyRef:
-                  name: app-secret
+                  name: app-pedidos-secret
                   key: DATASOURCE_MAXIMUM-POOL-SIZE
