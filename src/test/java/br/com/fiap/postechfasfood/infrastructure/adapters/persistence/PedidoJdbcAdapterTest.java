@@ -9,11 +9,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -283,5 +286,93 @@ class PedidoJdbcAdapterTest {
                 contains("SELECT COALESCE(MAX(nr_pedido)"),
                 eq(Integer.class)
         );
+    }
+
+    @Test
+    @DisplayName("Deve mapear itens do pedido via RowMapper da consulta de itens")
+    void deveMapearItensDoPedido() throws SQLException {
+        // Arrange
+        String pedidoId = UUID.randomUUID().toString();
+        Pedido pedidoSemItens = new Pedido.Builder()
+                .id(pedidoId)
+                .documentoCliente("12345678900")
+                .status(StatusPedido.RECEBIDO)
+                .numeroPedido(1)
+                .dataCriacao(LocalDateTime.now())
+                .dataUltimaAtualizacao(LocalDateTime.now())
+                .itens(new ArrayList<>())
+                .build();
+
+        when(jdbcTemplate.query(anyString(), any(RowMapper.class)))
+                .thenReturn(List.of(pedidoSemItens));
+
+        ArgumentCaptor<RowMapper<ItemPedido>> captor = ArgumentCaptor.forClass(RowMapper.class);
+        when(jdbcTemplate.query(contains("FROM tb_itens_pedido"), any(RowMapper.class), eq(pedidoId)))
+                .thenReturn(List.of());
+
+        // Act
+        adapter.listarTodos();
+
+        // Assert RowMapper mapping
+        verify(jdbcTemplate).query(contains("FROM tb_itens_pedido"), captor.capture(), eq(pedidoId));
+        RowMapper<ItemPedido> rowMapper = captor.getValue();
+
+        ResultSet rs = mock(ResultSet.class);
+        when(rs.getString("nm_produto")).thenReturn("Hamburguer");
+        when(rs.getString("cd_produto")).thenReturn("PROD-001");
+        when(rs.getInt("vl_quantidade")).thenReturn(2);
+        when(rs.getDouble("vl_preco_unitario")).thenReturn(15.90);
+
+        ItemPedido item = rowMapper.mapRow(rs, 0);
+
+        assertEquals("Hamburguer", item.getNomeProduto());
+        assertEquals("PROD-001", item.getCodigoProduto());
+        assertEquals(2, item.getQuantidade());
+        assertEquals(15.90, item.getPrecoUnitario());
+    }
+
+    @Test
+    @DisplayName("Deve mapear itens com diferentes valores numéricos")
+    void deveMapearItensComValoresVariados() throws SQLException {
+        // Arrange
+        String pedidoId = UUID.randomUUID().toString();
+        Pedido pedidoSemItens = new Pedido.Builder()
+                .id(pedidoId)
+                .documentoCliente("12345678900")
+                .status(StatusPedido.RECEBIDO)
+                .numeroPedido(99)
+                .dataCriacao(LocalDateTime.now())
+                .dataUltimaAtualizacao(LocalDateTime.now())
+                .itens(new ArrayList<>())
+                .build();
+
+        when(jdbcTemplate.query(anyString(), any(RowMapper.class)))
+                .thenReturn(List.of(pedidoSemItens));
+
+        ArgumentCaptor<RowMapper<ItemPedido>> captor = ArgumentCaptor.forClass(RowMapper.class);
+        when(jdbcTemplate.query(contains("FROM tb_itens_pedido"), any(RowMapper.class), eq(pedidoId)))
+                .thenReturn(List.of());
+
+        // Act
+        adapter.listarTodos();
+
+        verify(jdbcTemplate).query(contains("FROM tb_itens_pedido"), captor.capture(), eq(pedidoId));
+        RowMapper<ItemPedido> rowMapper = captor.getValue();
+
+        ResultSet rs = mock(ResultSet.class);
+
+        when(rs.getString("nm_produto")).thenReturn("Combo Grande");
+        when(rs.getString("cd_produto")).thenReturn("PROD-XYZ");
+        when(rs.getInt("vl_quantidade")).thenReturn(5);
+        when(rs.getDouble("vl_preco_unitario")).thenReturn(49.99);
+        ItemPedido item1 = rowMapper.mapRow(rs, 0);
+        assertEquals(5, item1.getQuantidade());
+        assertEquals(49.99, item1.getPrecoUnitario());
+
+        when(rs.getInt("vl_quantidade")).thenReturn(1);
+        when(rs.getDouble("vl_preco_unitario")).thenReturn(0.01);
+        ItemPedido item2 = rowMapper.mapRow(rs, 1);
+        assertEquals(1, item2.getQuantidade());
+        assertEquals(0.01, item2.getPrecoUnitario());
     }
 }
