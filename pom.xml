@@ -33,7 +33,7 @@
         <jacoco.version>0.8.11</jacoco.version>
 
         <!--  Caminho do relatório JaCoCo para o SonarQube -->
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
     <dependencies>
         <!-- Removido spring-boot-starter-data-jpa - usando JDBC puro -->
