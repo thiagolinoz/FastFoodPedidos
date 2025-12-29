@@ -34,10 +34,10 @@ public class ListarPedidosUseCaseImpl implements ListarPedidosUseCase {
         pedidosOrdenados.addAll(prontos);
         pedidosOrdenados.addAll(emPreparacao);
         pedidosOrdenados.addAll(recebidos);
-        
+
         return pedidosOrdenados;
     }
-    
+
     private List<Pedido> filtrarEOrdenarPorStatus(List<Pedido> pedidos, StatusPedido status) {
         return pedidos.stream()
             .filter(p -> p.getStatus() == status)

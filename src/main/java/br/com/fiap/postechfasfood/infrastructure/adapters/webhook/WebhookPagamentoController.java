@@ -31,35 +31,28 @@ public class WebhookPagamentoController {
         this.pedidoRepository = pedidoRepository;
     }
 
-    @PostMapping("/mercado-pago/pagamentos/{nrPedido}")
-    @Operation(summary = "Webhook Mercado Pago", 
+    @PostMapping("/mercado-pago/pagamentos")
+    @Operation(summary = "Webhook Mercado Pago",
                description = "Recebe notificações de status de pagamento do Mercado Pago")
     public ResponseEntity<WebhookPagamentoResponse> receberWebhookMercadoPago(
-            @PathVariable Integer nrPedido,
             @Valid @RequestBody WebhookPagamentoRequest request) {
         
         logger.info("Webhook recebido do Mercado Pago - Pedido: {} - Status: {}", 
-            nrPedido, request.statusPagamento());
-
-        if (!nrPedido.equals(request.numeroPedido())) {
-            logger.warn("Número de pedido inconsistente - Path: {} vs Body: {}", 
-                nrPedido, request.numeroPedido());
-            return ResponseEntity.badRequest().build();
-        }
+            request.numeroPedido(), request.statusPagamento());
 
         ProcessarWebhookPagamentoUseCase.WebhookPagamentoRequest useCaseRequest = 
             PedidoMapper.toWebhookUseCaseRequest(request);
 
         processarWebhookPagamentoUseCase.executar(useCaseRequest);
 
-        Pedido pedidoAtualizado = pedidoRepository.buscarPorNumeroPedido(nrPedido)
+        Pedido pedidoAtualizado = pedidoRepository.buscarPorNumeroPedido(request.numeroPedido())
             .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado após processamento"));
         
         logger.info("Webhook processado com sucesso - Pedido: {} - Novo status do pedido: {}",
-            nrPedido, pedidoAtualizado.getStatus());
-        
+            request.numeroPedido(), pedidoAtualizado.getStatus());
+
         WebhookPagamentoResponse response = WebhookPagamentoResponse.sucesso(
-            nrPedido, 
+            request.numeroPedido(),
             request.statusPagamento(),
             pedidoAtualizado.getStatus().name()
         );

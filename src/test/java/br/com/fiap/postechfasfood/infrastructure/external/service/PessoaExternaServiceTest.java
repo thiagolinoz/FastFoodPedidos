@@ -133,17 +133,17 @@ class PessoaExternaServiceTest {
             .thenThrow(FeignException.InternalServerError.class);
 
         // Act & Assert
-        RuntimeException exception = assertThrows(
-            RuntimeException.class,
+        PessoaNaoEncontradaException exception = assertThrows(
+            PessoaNaoEncontradaException.class,
             () -> pessoaExternaService.verificarSeCpfExiste(cpf)
         );
 
-        assertTrue(exception.getMessage().contains("Erro ao comunicar com serviço de pessoas"));
+        assertTrue(exception.getMessage().contains("não encontrado"));
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando campo ativo é null")
-    void deveLancarExcecaoQuandoCampoAtivoNull() {
+    @DisplayName("Deve assumir pessoa ativa quando campo ativo é null mas há dados válidos")
+    void deveAssumirPessoaAtivaQuandoCampoAtivoNull() {
         // Arrange
         String cpf = "12345678901";
         PessoaExternaDTO pessoaComAtivoNull = new PessoaExternaDTO();
@@ -154,12 +154,7 @@ class PessoaExternaServiceTest {
 
         when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(pessoaComAtivoNull);
 
-        // Act & Assert - Deve tratar null como inativo
-        PessoaNaoEncontradaException exception = assertThrows(
-            PessoaNaoEncontradaException.class,
-            () -> pessoaExternaService.verificarSeCpfExiste(cpf)
-        );
-
-        assertTrue(exception.getMessage().contains("não está ativa"));
+        // Act & Assert - Deve assumir pessoa ativa quando há dados válidos
+        assertDoesNotThrow(() -> pessoaExternaService.verificarSeCpfExiste(cpf));
     }
 }

@@ -3,6 +3,8 @@ package br.com.fiap.postechfasfood.infrastructure.adapters.rest;
 import br.com.fiap.postechfasfood.domain.entities.ItemPedido;
 import br.com.fiap.postechfasfood.domain.entities.Pedido;
 import br.com.fiap.postechfasfood.domain.ports.input.AtualizarStatusPedidoUseCase;
+import br.com.fiap.postechfasfood.domain.ports.input.BuscarPedidoPorNumeroUseCase;
+import br.com.fiap.postechfasfood.domain.ports.input.BuscarPedidosPorStatusUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.CadastrarPedidoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.ConsultarStatusPagamentoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.ListarPedidosUseCase;
@@ -56,6 +58,12 @@ class PedidoControllerTest {
     private ConsultarStatusPagamentoUseCase consultarStatusPagamentoUseCase;
 
     @Mock
+    private BuscarPedidoPorNumeroUseCase buscarPedidoPorNumeroUseCase;
+
+    @Mock
+    private BuscarPedidosPorStatusUseCase buscarPedidosPorStatusUseCase;
+
+    @Mock
     private ProdutoExternoService produtoExternoService;
 
     @Mock
@@ -72,6 +80,8 @@ class PedidoControllerTest {
             atualizarStatusPedidoUseCase,
             listarPedidosUseCase,
             consultarStatusPagamentoUseCase,
+            buscarPedidoPorNumeroUseCase,
+            buscarPedidosPorStatusUseCase,
             produtoExternoService,
             pessoaExternaService
         );
@@ -228,5 +238,62 @@ class PedidoControllerTest {
                         pedidoId, "PRONTO"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status", is("PRONTO")));
+    }
+
+    @Test
+    @DisplayName("Deve buscar pedido por número com sucesso")
+    void deveBuscarPedidoPorNumeroComSucesso() throws Exception {
+        // Arrange
+        Integer numeroPedido = 1;
+        when(buscarPedidoPorNumeroUseCase.executar(numeroPedido))
+                .thenReturn(pedidoMock);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/pedidos/numero/{numeroPedido}", numeroPedido))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.numeroPedido", is(1)))
+                .andExpect(jsonPath("$.status", is("RECEBIDO")))
+                .andExpect(jsonPath("$.documentoCliente", is("12345678900")));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 404 quando pedido não for encontrado por número")
+    void deveRetornar404QuandoPedidoNaoForEncontradoPorNumero() throws Exception {
+        // Arrange
+        Integer numeroPedido = 999;
+        when(buscarPedidoPorNumeroUseCase.executar(numeroPedido))
+                .thenThrow(new IllegalArgumentException("Pedido não encontrado com número: " + numeroPedido));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/pedidos/numero/{numeroPedido}", numeroPedido))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Deve buscar pedidos por status com sucesso")
+    void deveBuscarPedidosPorStatusComSucesso() throws Exception {
+        // Arrange
+        StatusPedido status = StatusPedido.RECEBIDO;
+        List<Pedido> pedidos = List.of(pedidoMock);
+        when(buscarPedidosPorStatusUseCase.executar(status))
+                .thenReturn(pedidos);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/pedidos/status/{status}", "RECEBIDO"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].status", is("RECEBIDO")))
+                .andExpect(jsonPath("$[0].numeroPedido", is(1)));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 para status inválido")
+    void deveRetornar400ParaStatusInvalido() throws Exception {
+        // Arrange
+        String statusInvalido = "STATUS_INEXISTENTE";
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/pedidos/status/{status}", statusInvalido))
+                .andExpect(status().isBadRequest());
     }
 }

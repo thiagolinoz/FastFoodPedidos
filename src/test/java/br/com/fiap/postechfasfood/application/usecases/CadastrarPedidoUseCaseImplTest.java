@@ -60,19 +60,15 @@ class CadastrarPedidoUseCaseImplTest {
             CategoriaProduto.LANCHE
         );
 
-        // Mock da validação de CPF - não deve lançar exceção
         doNothing().when(pessoaExternaService).verificarSeCpfExiste(cpf);
 
-        // Mock do catálogo: simula busca por ID
         when(catalogoService.buscarProdutoPorCodigo(idProduto))
             .thenReturn(Optional.of(produto));
 
-        // Mock do repositório
         when(pedidoRepository.gerarProximoNumeroPedido()).thenReturn(1);
         when(pedidoRepository.salvar(any(Pedido.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Request
         CadastrarPedidoUseCase.CadastrarPedidoRequest request =
             new CadastrarPedidoUseCase.CadastrarPedidoRequest(
                 cpf,

@@ -46,4 +46,16 @@ public class UseCaseConfig {
             PagamentoRepositoryPort pagamentoRepository) {
         return new ProcessarWebhookPagamentoUseCaseImpl(pedidoRepository, pagamentoRepository);
     }
+
+    @Bean
+    public BuscarPedidoPorNumeroUseCase buscarPedidoPorNumeroUseCase(
+            PedidoRepositoryPort pedidoRepository) {
+        return new BuscarPedidoPorNumeroUseCaseImpl(pedidoRepository);
+    }
+
+    @Bean
+    public BuscarPedidosPorStatusUseCase buscarPedidosPorStatusUseCase(
+            PedidoRepositoryPort pedidoRepository) {
+        return new BuscarPedidosPorStatusUseCaseImpl(pedidoRepository);
+    }
 }

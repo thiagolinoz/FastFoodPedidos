@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(
-    name = "produto-service",
-    url = "${app.external.produtos.url}"
+    name = "produto-service",  url = "${app.external.produtos.url:http://localhost:7777}"
+//    url = "${app.external.produtos.url}"
 )
 public interface ProdutoFeignClient {
 
