@@ -15,8 +15,7 @@ import java.util.UUID;
 public class PagamentoServiceAdapter implements PagamentoServicePort {
     
     private static final Logger logger = LoggerFactory.getLogger(PagamentoServiceAdapter.class);
-    
-    // Simulação de estado de pagamentos em memória
+
     private final Map<Integer, StatusPagamento> pagamentosSimulados = new HashMap<>();
     
     @Override
