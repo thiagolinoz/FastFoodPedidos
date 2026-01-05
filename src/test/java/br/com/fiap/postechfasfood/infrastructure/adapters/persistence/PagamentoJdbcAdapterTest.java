@@ -490,23 +490,24 @@ class PagamentoJdbcAdapterTest {
 
     private RowMapper<Pagamento> obterPagamentoRowMapper() {
         try {
-
-            Class<?>[] declaredClasses = PagamentoJdbcAdapter.class.getDeclaredClasses();
+            // Usar uma abordagem mais robusta para encontrar a classe RowMapper
             Class<?> pagamentoRowMapperClass = null;
-            
+            Class<?>[] declaredClasses = PagamentoJdbcAdapter.class.getDeclaredClasses();
+
             for (Class<?> clazz : declaredClasses) {
-                if ("PagamentoRowMapper".equals(clazz.getSimpleName())) {
+                // Verificar se a classe implementa RowMapper ao invés de comparar nome
+                if (RowMapper.class.isAssignableFrom(clazz)) {
                     pagamentoRowMapperClass = clazz;
                     break;
                 }
             }
-            
+
             assertNotNull(pagamentoRowMapperClass, "PagamentoRowMapper class not found");
 
             Constructor<?> constructor = pagamentoRowMapperClass.getDeclaredConstructor();
             constructor.setAccessible(true);
             Object instance = constructor.newInstance();
-            
+
             // Converter para RowMapper
             @SuppressWarnings("unchecked")
             RowMapper<Pagamento> mapper = (RowMapper<Pagamento>) instance;
