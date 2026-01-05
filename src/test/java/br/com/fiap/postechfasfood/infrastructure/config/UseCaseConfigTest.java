@@ -88,4 +88,24 @@ class UseCaseConfigTest {
         // Assert
         assertNotNull(useCase);
     }
+
+    @Test
+    @DisplayName("Deve criar bean BuscarPedidoPorNumeroUseCase")
+    void deveCriarBeanBuscarPedidoPorNumeroUseCase() {
+        // Act
+        BuscarPedidoPorNumeroUseCase useCase = useCaseConfig.buscarPedidoPorNumeroUseCase(pedidoRepository);
+
+        // Assert
+        assertNotNull(useCase);
+    }
+
+    @Test
+    @DisplayName("Deve criar bean BuscarPedidosPorStatusUseCase")
+    void deveCriarBeanBuscarPedidosPorStatusUseCase() {
+        // Act
+        BuscarPedidosPorStatusUseCase useCase = useCaseConfig.buscarPedidosPorStatusUseCase(pedidoRepository);
+
+        // Assert
+        assertNotNull(useCase);
+    }
 }

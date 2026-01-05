@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -14,7 +14,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -89,7 +88,7 @@ class PagamentoJdbcAdapterTest {
         String id = "pag-123";
         Pagamento pagamentoEsperado = criarPagamentoMock(id, 1);
         
-        when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq(id)))
+        when(jdbcTemplate.queryForObject(anyString(), ArgumentMatchers.<RowMapper<Pagamento>>any(), eq(id)))
             .thenReturn(pagamentoEsperado);
         
         // Act
@@ -106,7 +105,7 @@ class PagamentoJdbcAdapterTest {
     void deveRetornarVazioQuandoNaoEncontradoPorId() {
         // Arrange
         String id = "pag-inexistente";
-        when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq(id)))
+        when(jdbcTemplate.queryForObject(anyString(), ArgumentMatchers.<RowMapper<Pagamento>>any(), eq(id)))
             .thenThrow(new EmptyResultDataAccessException(1));
         
         // Act
@@ -123,7 +122,7 @@ class PagamentoJdbcAdapterTest {
         Integer numeroPedido = 1;
         Pagamento pagamentoEsperado = criarPagamentoMock("pag-123", numeroPedido);
         
-        when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq(numeroPedido)))
+        when(jdbcTemplate.queryForObject(anyString(), ArgumentMatchers.<RowMapper<Pagamento>>any(), eq(numeroPedido)))
             .thenReturn(pagamentoEsperado);
         
         // Act
@@ -139,7 +138,7 @@ class PagamentoJdbcAdapterTest {
     void deveRetornarVazioQuandoNaoHaPagamentoParaPedido() {
         // Arrange
         Integer numeroPedido = 999;
-        when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq(numeroPedido)))
+        when(jdbcTemplate.queryForObject(anyString(), ArgumentMatchers.<RowMapper<Pagamento>>any(), eq(numeroPedido)))
             .thenThrow(new EmptyResultDataAccessException(1));
         
         // Act
@@ -159,7 +158,7 @@ class PagamentoJdbcAdapterTest {
             criarPagamentoMock("pag-2", 1)
         );
         
-        when(jdbcTemplate.query(anyString(), any(RowMapper.class), eq(pedidoId)))
+        when(jdbcTemplate.query(anyString(), ArgumentMatchers.<RowMapper<Pagamento>>any(), eq(pedidoId)))
             .thenReturn(pagamentosEsperados);
         
         // Act
@@ -180,7 +179,7 @@ class PagamentoJdbcAdapterTest {
             criarPagamentoMock("pag-3", 3)
         );
         
-        when(jdbcTemplate.query(anyString(), any(RowMapper.class)))
+        when(jdbcTemplate.query(anyString(), ArgumentMatchers.<RowMapper<Pagamento>>any()))
             .thenReturn(pagamentosEsperados);
         
         // Act
@@ -251,23 +250,23 @@ class PagamentoJdbcAdapterTest {
     void deveMapearTodosOsStatusDePagamento() throws SQLException {
         // Arrange
         ResultSet rs = mock(ResultSet.class);
-        LocalDateTime agora = LocalDateTime.now();
 
         // Configurar campos comuns
         when(rs.getString("cd_pagamento")).thenReturn("pag-123");
         when(rs.getString("cd_pedido")).thenReturn("pedido-456");
         when(rs.getInt("nr_pedido")).thenReturn(1);
         when(rs.getBigDecimal("vl_pagamento")).thenReturn(BigDecimal.valueOf(68.00));
-        when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
         when(rs.getString("tx_transacao_id")).thenReturn("TX-123");
         when(rs.getString("tx_origem")).thenReturn("ORIGEM");
-        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(agora));
-        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
+        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
 
         // Act & Assert - Testar cada status
+        RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
         for (StatusPagamento status : StatusPagamento.values()) {
             when(rs.getString("tx_status_pagamento")).thenReturn(status.name());
-            RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
+            when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
             Pagamento resultado = rowMapper.mapRow(rs, 0);
             
             assertNotNull(resultado);
@@ -295,13 +294,14 @@ class PagamentoJdbcAdapterTest {
         when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(agora));
         when(rs.getString("tx_transacao_id")).thenReturn("TX-123");
         when(rs.getString("tx_origem")).thenReturn("ORIGEM");
-        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(agora));
-        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
+        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
 
         // Act & Assert
+        RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
         for (BigDecimal valor : valores) {
             when(rs.getBigDecimal("vl_pagamento")).thenReturn(valor);
-            RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
+            when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
             Pagamento resultado = rowMapper.mapRow(rs, 0);
             
             assertNotNull(resultado);
@@ -325,13 +325,14 @@ class PagamentoJdbcAdapterTest {
         when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(agora));
         when(rs.getString("tx_transacao_id")).thenReturn("TX-123");
         when(rs.getString("tx_origem")).thenReturn("ORIGEM");
-        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(agora));
-        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
+        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
 
         // Act & Assert
+        RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
         for (int numero : numeros) {
             when(rs.getInt("nr_pedido")).thenReturn(numero);
-            RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
+            when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
             Pagamento resultado = rowMapper.mapRow(rs, 0);
             
             assertNotNull(resultado);
@@ -355,13 +356,14 @@ class PagamentoJdbcAdapterTest {
         when(rs.getBigDecimal("vl_pagamento")).thenReturn(BigDecimal.valueOf(68.00));
         when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(agora));
         when(rs.getString("tx_transacao_id")).thenReturn("TX-123");
-        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(agora));
-        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
+        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
 
         // Act & Assert
+        RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
         for (String origem : origens) {
             when(rs.getString("tx_origem")).thenReturn(origem);
-            RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
+            when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
             Pagamento resultado = rowMapper.mapRow(rs, 0);
             
             assertNotNull(resultado);
@@ -405,7 +407,6 @@ class PagamentoJdbcAdapterTest {
     void deveMapearIdsComoStringCorretamente() throws SQLException {
         // Arrange
         ResultSet rs = mock(ResultSet.class);
-        LocalDateTime agora = LocalDateTime.now();
         String idPagamento = "550e8400-e29b-41d4-a716-446655440000";
         String idPedido = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 
@@ -414,11 +415,11 @@ class PagamentoJdbcAdapterTest {
         when(rs.getInt("nr_pedido")).thenReturn(1);
         when(rs.getString("tx_status_pagamento")).thenReturn("APROVADO");
         when(rs.getBigDecimal("vl_pagamento")).thenReturn(BigDecimal.valueOf(68.00));
-        when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
         when(rs.getString("tx_transacao_id")).thenReturn("TX-123");
         when(rs.getString("tx_origem")).thenReturn("ORIGEM");
-        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(agora));
-        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
+        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
 
         // Act
         RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
@@ -432,6 +433,7 @@ class PagamentoJdbcAdapterTest {
 
     @Test
     @DisplayName("Deve lançar SQLException quando ResultSet contém dados inválidos")
+    @SuppressWarnings("resource")
     void deveLancarSQLExceptionComDadosInvalidos() throws SQLException {
         // Arrange
         ResultSet rs = mock(ResultSet.class);
@@ -444,10 +446,10 @@ class PagamentoJdbcAdapterTest {
 
     @Test
     @DisplayName("Deve lançar exceção quando status de pagamento é inválido")
+    @SuppressWarnings("resource")
     void deveLancarExcecaoComStatusInvalido() throws SQLException {
         // Arrange
         ResultSet rs = mock(ResultSet.class);
-        LocalDateTime agora = LocalDateTime.now();
 
         when(rs.getString("cd_pagamento")).thenReturn("pag-123");
         when(rs.getString("cd_pedido")).thenReturn("pedido-456");
@@ -464,18 +466,17 @@ class PagamentoJdbcAdapterTest {
     void deveMapearStringVaziaENulaParaIds() throws SQLException {
         // Arrange
         ResultSet rs = mock(ResultSet.class);
-        LocalDateTime agora = LocalDateTime.now();
 
         when(rs.getString("cd_pagamento")).thenReturn("");
         when(rs.getString("cd_pedido")).thenReturn(null);
         when(rs.getInt("nr_pedido")).thenReturn(1);
         when(rs.getString("tx_status_pagamento")).thenReturn("APROVADO");
         when(rs.getBigDecimal("vl_pagamento")).thenReturn(BigDecimal.valueOf(68.00));
-        when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_pagamento")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
         when(rs.getString("tx_transacao_id")).thenReturn("TX-123");
         when(rs.getString("tx_origem")).thenReturn("ORIGEM");
-        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(agora));
-        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(agora));
+        when(rs.getTimestamp("dh_criacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
+        when(rs.getTimestamp("dh_atualizacao")).thenReturn(Timestamp.valueOf(LocalDateTime.now()));
 
         // Act
         RowMapper<Pagamento> rowMapper = obterPagamentoRowMapper();
@@ -487,30 +488,29 @@ class PagamentoJdbcAdapterTest {
         assertNull(resultado.getPedidoId());
     }
 
-    // ========== Método auxiliar para obter PagamentoRowMapper ==========
-
     private RowMapper<Pagamento> obterPagamentoRowMapper() {
         try {
-            // Obter a classe interna privada PagamentoRowMapper
+
             Class<?>[] declaredClasses = PagamentoJdbcAdapter.class.getDeclaredClasses();
             Class<?> pagamentoRowMapperClass = null;
             
             for (Class<?> clazz : declaredClasses) {
-                if (clazz.getSimpleName().equals("PagamentoRowMapper")) {
+                if ("PagamentoRowMapper".equals(clazz.getSimpleName())) {
                     pagamentoRowMapperClass = clazz;
                     break;
                 }
             }
             
             assertNotNull(pagamentoRowMapperClass, "PagamentoRowMapper class not found");
-            
-            // Criar uma instância usando reflexão
+
             Constructor<?> constructor = pagamentoRowMapperClass.getDeclaredConstructor();
             constructor.setAccessible(true);
             Object instance = constructor.newInstance();
             
             // Converter para RowMapper
-            return (RowMapper<Pagamento>) instance;
+            @SuppressWarnings("unchecked")
+            RowMapper<Pagamento> mapper = (RowMapper<Pagamento>) instance;
+            return mapper;
         } catch (Exception e) {
             throw new RuntimeException("Erro ao obter PagamentoRowMapper via reflexão", e);
         }
