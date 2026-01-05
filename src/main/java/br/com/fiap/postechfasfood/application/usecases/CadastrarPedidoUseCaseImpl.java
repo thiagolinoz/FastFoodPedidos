@@ -35,12 +35,10 @@ public class CadastrarPedidoUseCaseImpl implements CadastrarPedidoUseCase {
             throw new IllegalArgumentException("Pedido deve conter pelo menos um item");
         }
 
-        // Verificar se CPF existe na API de pessoas
         pessoaExternaService.verificarSeCpfExiste(request.documentoCliente());
 
         List<ItemPedido> itensPedido = new ArrayList<>();
         for (var itemRequest : request.itens()) {
-            // Buscar produto por ID na API externa
             Produto produto = catalogoService.buscarProdutoPorCodigo(itemRequest.idProduto())
                 .orElseThrow(() -> new IllegalArgumentException(
                     "Produto não encontrado: " + itemRequest.idProduto()));

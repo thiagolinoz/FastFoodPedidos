@@ -35,7 +35,7 @@ public class SwaggerConfig {
                     - PATCH /api/v1/pedidos/{id}/status/{status} - Atualizar status
                     - GET /api/v1/pedidos - Listar pedidos ordenados
                     - GET /api/v1/pedidos/{nr}/pagamento/status - Consultar pagamento
-                    - POST /webhook/mercado-pago/pagamentos/{nr} - Webhook de pagamento
+                    - POST /webhook/mercado-pago/pagamentos - Webhook de pagamento
                 """)
                 .contact(new Contact()
                     .name("FIAP - Pós Tech")));

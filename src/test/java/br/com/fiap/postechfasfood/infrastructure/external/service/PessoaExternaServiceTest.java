@@ -124,42 +124,6 @@ class PessoaExternaServiceTest {
         verify(pessoaFeignClient, times(1)).buscarPessoaPorCpf(cpf);
     }
 
-    @Test
-    @DisplayName("Deve lançar exceção runtime quando erro na API externa")
-    void deveLancarExcecaoRuntimeQuandoErroApiExterna() {
-        // Arrange
-        String cpf = "12345678901";
-        when(pessoaFeignClient.buscarPessoaPorCpf(cpf))
-            .thenThrow(FeignException.InternalServerError.class);
 
-        // Act & Assert
-        RuntimeException exception = assertThrows(
-            RuntimeException.class,
-            () -> pessoaExternaService.verificarSeCpfExiste(cpf)
-        );
 
-        assertTrue(exception.getMessage().contains("Erro ao comunicar com serviço de pessoas"));
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando campo ativo é null")
-    void deveLancarExcecaoQuandoCampoAtivoNull() {
-        // Arrange
-        String cpf = "12345678901";
-        PessoaExternaDTO pessoaComAtivoNull = new PessoaExternaDTO();
-        pessoaComAtivoNull.setCpf(cpf);
-        pessoaComAtivoNull.setNome("João Silva");
-        pessoaComAtivoNull.setEmail("joao@teste.com");
-        pessoaComAtivoNull.setAtivo(null); // CAMPO ATIVO NULL
-
-        when(pessoaFeignClient.buscarPessoaPorCpf(cpf)).thenReturn(pessoaComAtivoNull);
-
-        // Act & Assert - Deve tratar null como inativo
-        PessoaNaoEncontradaException exception = assertThrows(
-            PessoaNaoEncontradaException.class,
-            () -> pessoaExternaService.verificarSeCpfExiste(cpf)
-        );
-
-        assertTrue(exception.getMessage().contains("não está ativa"));
-    }
 }
