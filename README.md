@@ -42,67 +42,6 @@ A aplicação possui Swagger que pode ser acessado através da URL `http://local
 
 ---
 Instruções para utilizar os endpoints disponíveis:
-O projeto já contém registros de pessoas e produtos previamente cadastradas.
-	📁 Localização da carga:
-	src/main/resources/db/migration/V5__CargaInicialDados.sql
-
-### PESSOAS
-👤 Cadastrar Pessoa
-Endpoint: POST /api/v1/pessoas
-**Requisição (JSON):**
-{
-  "cdDocPessoa": "12345678901",         // CPF válido (somente números)
-  "nmPessoa": "João da Silva",          // Nome completo
-  "tpPessoa": "CLIENTE",                // deve obrigatoriamente ser "CLIENTE".
-  "dsEmail": "joao.silva@email.com"     // E-mail válido
-}
-
-🔍  Buscar Pessoa por CPF
-Endpoint: GET /api/v1/pessoas/{cdDocPessoa}
-**Requisição :**O CPF (cdDocPessoa) deve ter sido previamente cadastrado via API ou constar na carga inicial de dados.
-
-### PRODUTOS
-🔄  Atualiza produtos
-Endpoint: PUT /api/v1/produto/{cdProduto}
-O cdProduto deve ter sido previamente cadastrado via API ou constar na carga inicial de dados.
-**Requisição (JSON):**
-{
-  "nmProduto": “Café”,         // Nome do Produto
-  "dsDescricao": “Café sem açúcar”,         // Descrição do Produto
-  "vlPreco": 8,          // (somente números)
-  "tpCategoria": "LANCHE”,         // outras categorias: (ACOMPANHAMENTO, BEBIDA, SOBREMESA)
-}
-
-✏️Cadastra produto
-Endpoint: POST /api/v1/produto
-**Requisição (JSON):**
-{
-  "nmProduto": “Café”,         // Nome do Produto
-  "dsDescricao": “Café sem açúcar”,         // Descrição do Produto
-  "vlPreco": 8,          // (somente números)
-  "tpCategoria": "LANCHE”,         // outras categorias: (ACOMPANHAMENTO, BEBIDA, SOBREMESA)
-}
-
-
- 🔒 Desativa Produtos existentes
-Endpoint: Patch /api/v1/produto/{cdProduto}/desativar
-**Requisição:**
-Informar cdProduto existente
-
- 🔓 Ativa Produtos existentes
-Endpoint: Patch /api/v1/produto/{cdProduto}/ativa
-**Requisição:**
-Informar cdProduto existente
-
- 📄 Lista produtos 
-Endpoint: Get /api/v1/produtos
-Retorna todos os produtos cadastrados
-
- 📑 Lista produtos
-Endpoint: Get /api/v1/produtos/categoria
-**Requisição:**
-Informar tpCategoria
-Retorna todos os produtos cadastrados por categoria
 
 ### Pedidos
 🛒 Cadastra pedidos
@@ -209,9 +148,15 @@ Endpoint: Post /webhook/mercado-pago/pagamentos/{nrPedido}
 6. rodar
    ````bash
    kubectl port-forward service/app-service 30080:8080
+   
 ## Desenho de Arquitetura
-O arquido do desenho de arquitetura econtra-se na pasta ./arquitetura/arquitetura fase 2.drawio
+https://drive.google.com/file/d/1lfFRoWELXDzc1qfbsgWVOna_1l8oJOjV/view?usp=drive_link
+
+## Testes escrito em Gherkin
+src/test/java/br/com/fiap/postechfasfood/application/usecases/AtualizarStatusPedidoUseCaseImplTest.java
+cenário: "Deve atualizar status do pedido com sucesso"
+
 
 ## Vídeo 
-📹 https://youtu.be/2YXLZocAqf4
+📹 
 
