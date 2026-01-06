@@ -5,5 +5,5 @@ metadata:
 data:
   DATASOURCE_URL: "jdbc:mysql://fiap-fastfood-pedidos-aurora-instance-1.cleow80o855h.us-east-1.rds.amazonaws.com:3306/fiapfastfoodPedidos"
   MARIADB_DATABASE: "fiapfastfoodPedidos"
-  PRODUTOS_API_URL: "http://a2ed38947c37049168d1aebdf44031e6-779536483.us-east-1.elb.amazonaws.com "
-  PESSOAS_API_URL: "http://afe9fa17cf6ba49b7a3d33446a61c179-428813910.us-east-1.elb.amazonaws.com "
+  PRODUTOS_API_URL: "http://a2ed38947c37049168d1aebdf44031e6-779536483.us-east-1.elb.amazonaws.com"
+  PESSOAS_API_URL: "http://afe9fa17cf6ba49b7a3d33446a61c179-428813910.us-east-1.elb.amazonaws.com"
