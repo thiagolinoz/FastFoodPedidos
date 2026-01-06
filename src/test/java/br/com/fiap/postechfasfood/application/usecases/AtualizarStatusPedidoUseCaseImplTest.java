@@ -56,16 +56,16 @@ class AtualizarStatusPedidoUseCaseImplTest {
     @Test
     @DisplayName("Deve atualizar status do pedido com sucesso")
     void deveAtualizarStatusComSucesso() {
-        // Arrange
+        // Given (Dado): pagamento iniciado para um pedido
         StatusPedido novoStatus = StatusPedido.EM_PREPARACAO;
-        
+
         when(pedidoRepository.buscarPorId(pedidoId)).thenReturn(Optional.of(pedidoMock));
         when(pedidoRepository.atualizar(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
+        // When (Quando): o webhook informa pagamento aprovado
         Pedido resultado = useCase.executar(pedidoId, novoStatus);
 
-        // Assert
+        // Then (Então): o status do pagamento deve ser atualizado para APROVADO
         assertNotNull(resultado);
         assertEquals(novoStatus, resultado.getStatus());
         verify(pedidoRepository).buscarPorId(pedidoId);
