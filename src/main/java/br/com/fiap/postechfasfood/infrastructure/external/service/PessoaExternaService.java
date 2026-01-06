@@ -59,10 +59,9 @@ public class PessoaExternaService {
             Boolean snAtivo = pessoa.getSnAtivo();
             boolean ambosCamposAtivoNull = (ativo == null && snAtivo == null);
 
-            if (!pessoaAtiva && temDadosValidos && ambosCamposAtivoNull) {
-                log.warn("CPF {} - Campos ativo são null mas temos dados válidos, assumindo pessoa ativa", cpf);
-                log.info("CPF {} encontrado na API de pessoas - ASSUMINDO ATIVO (dados válidos)!", cpf);
-                return;
+            if (ambosCamposAtivoNull && temDadosValidos) {
+                log.warn("CPF {} - Campos ativo são null mas temos dados válidos, tratando como inativo", cpf);
+                throw new PessoaNaoEncontradaException("Pessoa com CPF " + cpf + " não está ativa");
             }
 
             if (!pessoaAtiva) {
@@ -82,11 +81,11 @@ public class PessoaExternaService {
         } catch (FeignException e) {
             log.error("CPF {} - Erro Feign na API de pessoas: Status={}, Message={}",
                 cpf, e.status(), e.getMessage());
-            throw new PessoaNaoEncontradaException("CPF " + cpf + " não encontrado - erro de comunicação", e);
+            throw new RuntimeException("Erro ao comunicar com serviço de pessoas: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("CPF {} - Erro inesperado: Tipo={}, Message={}",
                 cpf, e.getClass().getSimpleName(), e.getMessage(), e);
-            throw new PessoaNaoEncontradaException("CPF " + cpf + " não encontrado - erro interno", e);
+            throw new RuntimeException("Erro ao comunicar com serviço de pessoas: " + e.getMessage(), e);
         }
     }
 }

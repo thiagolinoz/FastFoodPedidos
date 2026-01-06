@@ -4,6 +4,8 @@ import br.com.fiap.postechfasfood.domain.entities.Pedido;
 import br.com.fiap.postechfasfood.domain.entities.Produto;
 import br.com.fiap.postechfasfood.domain.exception.PessoaNaoEncontradaException;
 import br.com.fiap.postechfasfood.domain.ports.input.AtualizarStatusPedidoUseCase;
+import br.com.fiap.postechfasfood.domain.ports.input.BuscarPedidoPorNumeroUseCase;
+import br.com.fiap.postechfasfood.domain.ports.input.BuscarPedidosPorStatusUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.CadastrarPedidoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.ConsultarStatusPagamentoUseCase;
 import br.com.fiap.postechfasfood.domain.ports.input.ListarPedidosUseCase;
@@ -39,6 +41,8 @@ public class PedidoController {
     private final AtualizarStatusPedidoUseCase atualizarStatusPedidoUseCase;
     private final ListarPedidosUseCase listarPedidosUseCase;
     private final ConsultarStatusPagamentoUseCase consultarStatusPagamentoUseCase;
+    private final BuscarPedidoPorNumeroUseCase buscarPedidoPorNumeroUseCase;
+    private final BuscarPedidosPorStatusUseCase buscarPedidosPorStatusUseCase;
     private final ProdutoExternoService produtoExternoService;
     private final PessoaExternaService pessoaExternaService;
 
@@ -74,7 +78,7 @@ public class PedidoController {
 
     @GetMapping
     @Operation(summary = "Listar pedidos", 
-               description = "Lista todos os pedidos ordenados (Pronto > Em Preparação > Recebido)")
+               description = "Lista todos os pedidos ordenados por status (Pronto > Em Preparação > Recebido) e por data de criação")
     public ResponseEntity<List<PedidoResponse>> listarPedidos() {
 
         List<Pedido> pedidos = listarPedidosUseCase.executar();
@@ -109,37 +113,32 @@ public class PedidoController {
         }
     }
 
-    @GetMapping("/debug/pessoa/{cpf}")
-    @Operation(summary = "Debug - Testar API de pessoas",
-               description = "Endpoint para debug da integração com API de pessoas")
-    public ResponseEntity<?> debugPessoa(@PathVariable String cpf) {
+    @GetMapping("/numero/{numeroPedido}")
+    @Operation(summary = "Buscar pedido por número",
+               description = "Busca um pedido específico pelo seu número")
+    public ResponseEntity<PedidoResponse> buscarPorNumeroPedido(@PathVariable Integer numeroPedido) {
         try {
-            log.info("DEBUG - Testando CPF: {}", cpf);
-
-            // Chamar diretamente o service para debug
-            pessoaExternaService.verificarSeCpfExiste(cpf);
-
-            return ResponseEntity.ok(Map.of(
-                "cpf", cpf,
-                "status", "ENCONTRADO_E_ATIVO",
-                "message", "CPF encontrado e pessoa está ativa"
-            ));
-
-        } catch (PessoaNaoEncontradaException e) {
-            log.warn("DEBUG - CPF {} não encontrado: {}", cpf, e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of(
-                "cpf", cpf,
-                "status", "NAO_ENCONTRADO_OU_INATIVO",
-                "message", e.getMessage()
-            ));
-        } catch (Exception e) {
-            log.error("DEBUG - Erro inesperado para CPF {}: {}", cpf, e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of(
-                "cpf", cpf,
-                "status", "ERRO",
-                "message", e.getMessage(),
-                "type", e.getClass().getSimpleName()
-            ));
+            Pedido pedido = buscarPedidoPorNumeroUseCase.executar(numeroPedido);
+            PedidoResponse response = PedidoMapper.toResponse(pedido);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/status/{status}")
+    @Operation(summary = "Buscar pedidos por status",
+               description = "Lista todos os pedidos com um status específico")
+    public ResponseEntity<List<PedidoResponse>> buscarPorStatusPedido(@PathVariable String status) {
+        try {
+            StatusPedido statusPedido = StatusPedido.fromString(status);
+            List<Pedido> pedidos = buscarPedidosPorStatusUseCase.executar(statusPedido);
+            List<PedidoResponse> response = PedidoMapper.toResponseList(pedidos);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+
 }

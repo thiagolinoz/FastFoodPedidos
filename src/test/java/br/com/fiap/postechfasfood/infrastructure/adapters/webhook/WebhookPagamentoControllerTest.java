@@ -64,8 +64,8 @@ class WebhookPagamentoControllerTest {
         
         // Act
         ResponseEntity<WebhookPagamentoResponse> response = 
-            controller.receberWebhookMercadoPago(nrPedido, request);
-        
+            controller.receberWebhookMercadoPago(request);
+
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -83,32 +83,6 @@ class WebhookPagamentoControllerTest {
         ProcessarWebhookPagamentoUseCase.WebhookPagamentoRequest useCaseRequest = captor.getValue();
         assertEquals(nrPedido, useCaseRequest.numeroPedido());
         assertEquals(StatusPagamento.APROVADO, useCaseRequest.statusPagamento());
-    }
-    
-    @Test
-    @DisplayName("Deve retornar BAD_REQUEST quando número do pedido inconsistente")
-    void deveRetornarBadRequestQuandoNumeroPedidoInconsistente() {
-        // Arrange
-        Integer nrPedidoPath = 1;
-        Integer nrPedidoBody = 2;
-        
-        WebhookPagamentoRequest request = new WebhookPagamentoRequest(
-            nrPedidoBody,
-            "APROVADO",
-            BigDecimal.valueOf(68.00),
-            LocalDateTime.now(),
-            "MP-123456789",
-            "MERCADO_PAGO"
-        );
-        
-        // Act
-        ResponseEntity<WebhookPagamentoResponse> response = 
-            controller.receberWebhookMercadoPago(nrPedidoPath, request);
-        
-        // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(processarWebhookPagamentoUseCase, never()).executar(any());
-        verify(pedidoRepository, never()).buscarPorNumeroPedido(any());
     }
     
     @Test
@@ -133,8 +107,8 @@ class WebhookPagamentoControllerTest {
         
         // Act
         ResponseEntity<WebhookPagamentoResponse> response = 
-            controller.receberWebhookMercadoPago(nrPedido, request);
-        
+            controller.receberWebhookMercadoPago(request);
+
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -164,7 +138,7 @@ class WebhookPagamentoControllerTest {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
-            () -> controller.receberWebhookMercadoPago(nrPedido, request)
+            () -> controller.receberWebhookMercadoPago(request)
         );
         
         assertEquals("Pedido não encontrado após processamento", exception.getMessage());
