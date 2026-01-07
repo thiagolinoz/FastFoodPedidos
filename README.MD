@@ -158,5 +158,5 @@ cenário: "Deve atualizar status do pedido com sucesso"
 
 
 ## Vídeo 
-📹 
+📹 https://youtu.be/oA8CdS8MSWY
 
