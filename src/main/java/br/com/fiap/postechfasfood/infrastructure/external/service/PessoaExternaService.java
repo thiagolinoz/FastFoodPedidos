@@ -27,57 +27,47 @@ public class PessoaExternaService {
             PessoaExternaDTO pessoa = pessoaFeignClient.buscarPessoaPorCpf(cpf);
 
             if (pessoa == null) {
-                log.warn("CPF {} - API retornou null", cpf);
-                throw new PessoaNaoEncontradaException("CPF " + cpf + " não encontrado");
-            }
-
-            log.info("CPF {} - Pessoa encontrada (campos padrão): CPF={}, Nome={}, Email={}, Ativo={}",
-                cpf, pessoa.getCpf(), pessoa.getNome(), pessoa.getEmail(), pessoa.getAtivo());
-            log.info("CPF {} - Pessoa encontrada (campos alternativos): CdDoc={}, NmPessoa={}, DsEmail={}, SnAtivo={}",
-                cpf, pessoa.getCdDocPessoa(), pessoa.getNmPessoa(), pessoa.getDsEmail(), pessoa.getSnAtivo());
-
-            if (pessoa.isEmpty()) {
-                log.error("CPF {} - API externa retornou objeto completamente vazio! Todos os campos são null.", cpf);
-                log.error("CPF {} - PROBLEMA NA API EXTERNA: Verifique o mapeamento JSON ou a configuração da API", cpf);
-
-                log.warn("CPF {} - APLICANDO WORKAROUND: Assumindo pessoa ativa devido ao problema da API externa", cpf);
+                log.info("CPF {} - API retornou null, tratando como pedido anônimo", cpf);
                 return;
             }
 
-            String cpfRetornado = pessoa.getCpfUnificado();
-            String nomeRetornado = pessoa.getNomeUnificado();
-            String emailRetornado = pessoa.getEmailUnificado();
+            log.info("CPF {} - Pessoa encontrada: CPF={}, Nome={}, Email={}, Tipo={}",
+                cpf, pessoa.getCdDocPessoa(), pessoa.getNmPessoa(), pessoa.getDsEmail(), pessoa.getTpPessoa());
 
-            log.info("CPF {} - Dados unificados: CPF_Real={}, Nome={}, Email={}",
-                cpf, cpfRetornado, nomeRetornado, emailRetornado);
+            // Valida campos obrigatórios (apenas cdDocPessoa é opcional)
 
-            boolean pessoaAtiva = pessoa.isAtiva();
-            log.info("CPF {} - Resultado isAtiva(): {}", cpf, pessoaAtiva);
-
-            boolean temDadosValidos = cpfRetornado != null && nomeRetornado != null;
-            Boolean ativo = pessoa.getAtivo();
-            Boolean snAtivo = pessoa.getSnAtivo();
-            boolean ambosCamposAtivoNull = (ativo == null && snAtivo == null);
-
-            if (ambosCamposAtivoNull && temDadosValidos) {
-                log.warn("CPF {} - Campos ativo são null mas temos dados válidos, tratando como inativo", cpf);
-                throw new PessoaNaoEncontradaException("Pessoa com CPF " + cpf + " não está ativa");
+            // Nome é obrigatório - não pode ser null nem vazio
+            if (pessoa.getNmPessoa() == null || pessoa.getNmPessoa().trim().isEmpty()) {
+                log.info("CPF {} - Nome é obrigatório mas está null/vazio, tratando como pedido anônimo", cpf);
+                return;
             }
 
-            if (!pessoaAtiva) {
-                String motivo = ambosCamposAtivoNull ? "status indefinido (null)" : "inativa (false)";
-                log.warn("CPF {} encontrado mas pessoa está {} na API de pessoas", cpf, motivo);
-                throw new PessoaNaoEncontradaException("Pessoa com CPF " + cpf + " não está ativa");
+            // Tipo de pessoa é obrigatório - não pode ser null nem vazio
+            if (pessoa.getTpPessoa() == null || pessoa.getTpPessoa().trim().isEmpty()) {
+                log.info("CPF {} - Tipo de pessoa é obrigatório mas está null/vazio, tratando como pedido anônimo", cpf);
+                return;
             }
 
-            log.info("CPF {} encontrado na API de pessoas e está ativo - VALIDAÇÃO OK!", cpf);
+            // Email é obrigatório - não pode ser null nem vazio
+            if (pessoa.getDsEmail() == null || pessoa.getDsEmail().trim().isEmpty()) {
+                log.info("CPF {} - Email é obrigatório mas está null/vazio, tratando como pedido anônimo", cpf);
+                return;
+            }
+
+            // Apenas cdDocPessoa pode ser null (isso é permitido)
+            if (pessoa.getCdDocPessoa() == null) {
+                log.info("CPF {} - cdDocPessoa é null (permitido), pessoa válida com Nome: {}, Email: {}, Tipo: {}",
+                    cpf, pessoa.getNmPessoa(), pessoa.getDsEmail(), pessoa.getTpPessoa());
+            }
+
+            log.info("CPF {} encontrado na API de pessoas - VALIDAÇÃO OK!", cpf);
 
         } catch (PessoaNaoEncontradaException e) {
             log.warn("CPF {} - PessoaNaoEncontradaException: {}", cpf, e.getMessage());
             throw e;
         } catch (FeignException.NotFound e) {
-            log.warn("CPF {} - API retornou 404 NotFound: {}", cpf, e.getMessage());
-            throw new PessoaNaoEncontradaException("CPF " + cpf + " não encontrado na API externa", e);
+            log.info("CPF {} - API retornou 404 NotFound, tratando como pedido anônimo: {}", cpf, e.getMessage());
+            return;
         } catch (FeignException e) {
             log.error("CPF {} - Erro Feign na API de pessoas: Status={}, Message={}",
                 cpf, e.status(), e.getMessage());
